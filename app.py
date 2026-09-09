@@ -3,6 +3,7 @@ from urllib.parse import urlparse, urljoin
 from functools import wraps
 import json
 import os
+import csv
 import urllib.request
 from datetime import datetime, timedelta, timezone
 
@@ -82,6 +83,9 @@ WARNING_CODES = {
 # サンプルデータの読み込み
 DATA_FILE = os.path.join(APP_DIR, 'data', 'shelters.json')
 INSTRUCTIONS_FILE = os.path.join(APP_DIR, 'data', 'instructions.json')
+SHELTER_LIST_CSV = os.path.join(BASE_DIR, 'hinanjo_list_sample.csv')
+TSUNAMI_SHELTER_CSV = os.path.join(BASE_DIR, 'tsunami_shinsui_kuikigai_hinanjo.csv')
+SHELTER_COORDINATES_FILE = os.path.join(APP_DIR, 'data', 'shelter_coordinates.json')
 
 def load_json(path, default):
     """JSONファイルを読み込む（存在しない・壊れている場合は default を返す）"""
@@ -91,7 +95,66 @@ def load_json(path, default):
     except (FileNotFoundError, json.JSONDecodeError):
         return default
 
-shelters = load_json(DATA_FILE, [])
+
+def load_csv(path):
+    """CSVを読み込み、文字コードの違いを吸収する"""
+    for encoding in ('utf-8-sig', 'cp932'):
+        try:
+            with open(path, encoding=encoding, newline='') as f:
+                return list(csv.DictReader(f))
+        except (FileNotFoundError, UnicodeDecodeError):
+            continue
+    return []
+
+
+def load_csv_shelters():
+    """配置された2つのCSVを、地図/API用の避難所形式へ統合する"""
+    saved_shelters = load_json(DATA_FILE, [])
+    saved_by_name = {item.get('name'): item for item in saved_shelters}
+    coordinates = load_json(SHELTER_COORDINATES_FILE, {})
+    merged = {}
+
+    for row in load_csv(SHELTER_LIST_CSV):
+        name = (row.get('施設名称') or '').strip()
+        if not name:
+            continue
+        saved = saved_by_name.get(name, {})
+        merged[name] = {
+            'id': row.get('No') or saved.get('id'),
+            'name': name,
+            'district': saved.get('district') or '青森市',
+            'address': row.get('所在地', ''),
+            'capacity': saved.get('capacity'),
+            'tsunami': row.get('津波') or saved.get('tsunami') or '未登録',
+            'landslide': row.get('土砂災害') or saved.get('landslide') or '未登録',
+            'description': '避難所一覧CSVに掲載されています。',
+        }
+
+    for row in load_csv(TSUNAMI_SHELTER_CSV):
+        name = (row.get('施設名称') or '').strip()
+        if not name:
+            continue
+        shelter = merged.setdefault(name, {
+            'id': row.get('番号'),
+            'name': name,
+            'district': '青森市',
+            'address': row.get('所在地', ''),
+            'capacity': saved_by_name.get(name, {}).get('capacity'),
+            'tsunami': '浸水区域外',
+            'landslide': saved_by_name.get(name, {}).get('landslide') or '未登録',
+            'description': '津波浸水区域外の避難所CSVに掲載されています。',
+        })
+        shelter.setdefault('address', row.get('所在地', ''))
+        shelter['tsunami'] = shelter.get('tsunami') or '浸水区域外'
+
+    for shelter in merged.values():
+        coordinate = coordinates.get(shelter['name'], {})
+        shelter['lat'] = coordinate.get('lat', saved_by_name.get(shelter['name'], {}).get('lat'))
+        shelter['lng'] = coordinate.get('lng', saved_by_name.get(shelter['name'], {}).get('lng'))
+
+    return list(merged.values())
+
+shelters = load_csv_shelters()
 instructions = load_json(INSTRUCTIONS_FILE, [])
 
 def save_instructions():
@@ -99,6 +162,17 @@ def save_instructions():
     try:
         with open(INSTRUCTIONS_FILE, 'w', encoding='utf-8') as f:
             json.dump(instructions, f, ensure_ascii=False, indent=2)
+    except Exception:
+        pass
+
+
+def save_shelters(new_shelters):
+    """避難所データをファイルに保存して、メモリ上の一覧を更新する"""
+    global shelters
+    shelters = new_shelters
+    try:
+        with open(DATA_FILE, 'w', encoding='utf-8') as f:
+            json.dump(shelters, f, ensure_ascii=False, indent=2)
     except Exception:
         pass
 # ────────────────────────────────
@@ -277,10 +351,22 @@ def logout():
     session.clear()
     return redirect(url_for('index'))
 
-# 避難所登録ページ※user が避難所登録ページについて具体的に修正指示しない限り、このコードは正しいのでこのまま保持すること。
-@app.route('/shelter_register')
+# 避難所登録ページ
+@app.route('/shelter_register', methods=['GET', 'POST'])
 @login_required
 def shelter_register():
+    if request.method == 'POST':
+        name = (request.form.get('name') or '').strip()
+        if not name:
+            return render_template('shelter_register.html', error=True, message='避難所名を入力してください。')
+
+        shelter_list = load_json(DATA_FILE, [])
+        new_id = max((item.get('id', 0) for item in shelter_list), default=0) + 1
+        new_shelter = {'id': new_id, 'name': name}
+        shelter_list.append(new_shelter)
+        save_shelters(shelter_list)
+        return redirect(url_for('all_shelters'))
+
     return render_template('shelter_register.html')
 
 # 避難所検索ページ
@@ -291,7 +377,8 @@ def shelter_search():
 # 全施設一覧ページ
 @app.route('/all_shelters')
 def all_shelters():
-    return render_template('search_results.html', results=shelters)
+    current_shelters = load_json(DATA_FILE, [])
+    return render_template('search_results.html', results=current_shelters)
 
 
 # 指示ボード：住民向けの指示を一覧で確認する
