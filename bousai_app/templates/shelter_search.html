@@ -71,6 +71,17 @@
     flex-wrap: wrap;
   }
 
+  .shelter-visibility-button {
+    border: 1px solid var(--blue-700);
+    border-radius: 8px;
+    padding: 8px 12px;
+    color: white;
+    background: var(--blue-700);
+    font: inherit;
+    font-weight: 700;
+    cursor: pointer;
+  }
+
   .map-shell {
     margin-top: 14px;
     border-radius: 18px;
@@ -221,6 +232,8 @@
     box-shadow: 0 0 0 3px rgba(255,59,48,0.16);
   }
 
+  .legend-dot.closed { background: #111; box-shadow: 0 0 0 3px rgba(17,17,17,0.14); }
+
   .damage-legend-dot {
     width: 12px;
     height: 12px;
@@ -228,6 +241,13 @@
     background: #8e44ad;
     display: inline-block;
     box-shadow: 0 0 0 3px rgba(142,68,173,0.18);
+  }
+
+  .damage-marker {
+    background: #8e44ad;
+    border: 2px solid #fff;
+    border-radius: 50%;
+    box-shadow: 0 0 0 3px rgba(142,68,173,0.28);
   }
 
   .shelter-actions {
@@ -319,6 +339,9 @@
         <select id="areaSelect" aria-label="地区を選択" disabled>
           <option value="">地域を先に選択</option>
         </select>
+        <button id="shelterVisibilityButton" class="shelter-visibility-button" type="button" aria-pressed="false">
+          既存の避難所を非表示
+        </button>
       </label>
     </div>
 
@@ -333,7 +356,7 @@
         <p class="route-hint">出発地点を指定するには左の地図をクリックしてください。</p>
       </aside>
     </div>
-    <div class="legend"><span class="legend-dot"></span>避難所（赤丸） <span class="damage-legend-dot"></span>被害投稿（紫）</div>
+    <div class="legend"><span class="legend-dot"></span>開設中 <span class="legend-dot closed"></span>未開設 <span class="damage-legend-dot"></span>被害投稿（紫）</div>
   </div>
 </div>
 
@@ -354,15 +377,31 @@ document.addEventListener('DOMContentLoaded', function () {
   }).addTo(map);
 
   const markersLayer = L.layerGroup().addTo(map);
+  const damageMarkersLayer = L.layerGroup().addTo(map);
   const boundaryLayer = L.layerGroup().addTo(map);
   const districtSelect = document.getElementById('districtSelect');
   const areaSelect = document.getElementById('areaSelect');
+  const shelterVisibilityButton = document.getElementById('shelterVisibilityButton');
   const detailPanel = document.getElementById('shelterDetailPanel');
   const routeLayer = L.layerGroup().addTo(map);
   let startPoint = null;
   let selectedShelterData = null;
   let routeRequestId = 0;
   let routeLine = null;
+  let sheltersVisible = true;
+
+  shelterVisibilityButton.addEventListener('click', function () {
+    sheltersVisible = !sheltersVisible;
+    if (sheltersVisible) {
+      markersLayer.addTo(map);
+    } else {
+      map.removeLayer(markersLayer);
+    }
+    shelterVisibilityButton.setAttribute('aria-pressed', String(!sheltersVisible));
+    shelterVisibilityButton.textContent = sheltersVisible
+      ? '既存の避難所を非表示'
+      : '既存の避難所を表示';
+  });
 
   map.on('click', function (event) {
     startPoint = event.latlng;
@@ -398,9 +437,11 @@ document.addEventListener('DOMContentLoaded', function () {
   }
 
   function popupHtml(shelter) {
+    const isOpen = shelter.is_open !== false;
     return `
       <div style="min-width: 200px; max-width: 240px; line-height: 1.7;">
         <div style="font-weight: 800; font-size: 1.05rem; margin-bottom: 8px; color: #0d3e72;">${escapeHtml(shelter.name)}</div>
+        <div><strong>開設状況:</strong> ${isOpen ? '開設中' : '未開設'}</div>
         <div><strong>地区:</strong> ${escapeHtml(shelter.district || '未登録')}</div>
         <div><strong>地区名:</strong> ${escapeHtml(shelter.area || '未登録')}</div>
         <div><strong>住所:</strong> ${escapeHtml(shelter.address || '未登録')}</div>
@@ -410,10 +451,32 @@ document.addEventListener('DOMContentLoaded', function () {
         <div style="margin-top: 8px; color: #42566d;">${escapeHtml(shelter.description || '')}</div>
         <div class="shelter-actions">
           <button type="button" class="shelter-detail-button" data-shelter-id="${escapeHtml(shelter.id)}">詳細</button>
-          <button type="button" class="shelter-route-link" data-route-shelter-id="${escapeHtml(shelter.id)}">サイト内ルート</button>
+          <button type="button" class="shelter-route-link" data-route-shelter-id="${escapeHtml(shelter.id)}">サイト内でルート表示</button>
         </div>
       </div>
     `;
+  }
+
+  function damagePopupHtml(post) {
+    return `<div style="min-width: 180px; line-height: 1.6;">
+      <strong style="color: #6c3483;">災害・被害投稿</strong>
+      <div><strong>住所:</strong> ${escapeHtml(post.address || '未登録')}</div>
+      <div>${escapeHtml(post.comment || 'コメントなし')}</div>
+    </div>`;
+  }
+
+  function renderDamageMarkers(posts) {
+    damageMarkersLayer.clearLayers();
+    posts.forEach(function (post) {
+      if (!Number.isFinite(post.latitude) || !Number.isFinite(post.longitude)) return;
+      L.circleMarker([post.latitude, post.longitude], {
+        radius: 7,
+        color: '#6c3483',
+        weight: 2,
+        fillColor: '#8e44ad',
+        fillOpacity: 0.92
+      }).bindPopup(damagePopupHtml(post)).addTo(damageMarkersLayer);
+    });
   }
 
   function showShelterDetail(shelter) {
@@ -476,20 +539,75 @@ document.addEventListener('DOMContentLoaded', function () {
     const walkDistance = document.getElementById('walkDistance');
     walkTime.textContent = '取得中';
     walkDistance.textContent = '取得中';
-    const coordinates = `${startPoint.lng},${startPoint.lat};${shelter.lng},${shelter.lat}`;
-    const url = `https://router.project-osrm.org/route/v1/driving/${coordinates}?overview=full&geometries=geojson&steps=false`;
-    fetch(url)
-      .then(response => {
-        if (!response.ok) throw new Error('route request failed');
-        return response.json();
-      })
-      .then(data => {
-        if (currentRequestId !== routeRequestId || !data.routes?.length) throw new Error('route unavailable');
-        const route = data.routes[0];
+    const directStart = [startPoint.lng, startPoint.lat];
+    const directEnd = [shelter.lng, shelter.lat];
+    const hazards = window.damagePosts || [];
+    const deltaLng = directEnd[0] - directStart[0];
+    const deltaLat = directEnd[1] - directStart[1];
+    const length = Math.hypot(deltaLng, deltaLat) || 1;
+    const nearbyHazards = hazards.filter(function (post) {
+      if (!Number.isFinite(post.latitude) || !Number.isFinite(post.longitude)) return false;
+      const along = ((post.longitude - directStart[0]) * deltaLng + (post.latitude - directStart[1]) * deltaLat) / (length * length);
+      const cross = Math.abs((post.longitude - directStart[0]) * deltaLat - (post.latitude - directStart[1]) * deltaLng) / length;
+      return along > 0.08 && along < 0.92 && cross < 0.012;
+    }).sort(function (left, right) {
+      const leftAlong = (left.longitude - directStart[0]) * deltaLng + (left.latitude - directStart[1]) * deltaLat;
+      const rightAlong = (right.longitude - directStart[0]) * deltaLng + (right.latitude - directStart[1]) * deltaLat;
+      return leftAlong - rightAlong;
+    }).slice(0, 4);
+    const candidates = [{ points: [directStart, directEnd], avoidsHazards: false }];
+    if (nearbyHazards.length > 1) {
+      candidates.push({
+        points: [directStart].concat(nearbyHazards.map(function (post, index) {
+          const offset = 0.018 + index * 0.003;
+          return [
+            post.longitude - offset * (-deltaLat / length),
+            post.latitude - offset * (deltaLng / length)
+          ];
+        }), [directEnd]),
+        avoidsHazards: true
+      });
+    }
+    nearbyHazards.forEach(function (post, index) {
+      const offset = 0.018 + index * 0.003;
+      const side = index % 2 === 0 ? 1 : -1;
+      candidates.push({
+        points: [
+          directStart,
+          [
+            post.longitude + side * offset * (-deltaLat / length),
+            post.latitude + side * offset * (deltaLng / length)
+          ],
+          directEnd
+        ],
+        avoidsHazards: true
+      });
+    });
+
+    function routeUrl(points) {
+      const coordinates = points.map(point => point.join(',')).join(';');
+      return `https://router.project-osrm.org/route/v1/driving/${coordinates}?overview=full&geometries=geojson&steps=false`;
+    }
+
+    Promise.all(candidates.map(function (candidate) {
+      return fetch(routeUrl(candidate.points))
+        .then(response => response.ok ? response.json() : null)
+        .then(data => data && data.routes?.length ? { route: data.routes[0], avoidsHazards: candidate.avoidsHazards } : null)
+        .catch(() => null);
+    }))
+      .then(results => {
+        const available = results.filter(Boolean);
+        if (currentRequestId !== routeRequestId || !available.length) throw new Error('route unavailable');
+        const routeResult = available.sort((left, right) => {
+          const leftScore = left.route.distance + (!left.avoidsHazards && nearbyHazards.length ? 100000 : 0);
+          const rightScore = right.route.distance + (!right.avoidsHazards && nearbyHazards.length ? 100000 : 0);
+          return leftScore - rightScore;
+        })[0];
+        const route = routeResult.route;
         if (routeLine) routeLayer.removeLayer(routeLine);
         routeLine = L.geoJSON(route.geometry, { style: { color: '#e53935', weight: 6, opacity: 0.9 } }).addTo(routeLayer);
         walkDistance.textContent = route.distance >= 1000 ? `${(route.distance / 1000).toFixed(1)}km` : `${Math.round(route.distance)}m`;
-        walkTime.textContent = `${Math.max(1, Math.ceil(route.distance / 80))}分`;
+        walkTime.textContent = `${Math.max(1, Math.ceil(route.distance / 80))}分${routeResult.avoidsHazards ? '（被害地点を回避）' : ''}`;
       })
       .catch(() => {
         if (currentRequestId !== routeRequestId) return;
@@ -539,7 +657,7 @@ document.addEventListener('DOMContentLoaded', function () {
         radius: 8,
         color: '#d11a2a',
         weight: 2,
-        fillColor: '#ff3b30',
+        fillColor: shelter.is_open !== false ? '#ff3b30' : '#111',
         fillOpacity: 0.9
       });
 
@@ -548,6 +666,11 @@ document.addEventListener('DOMContentLoaded', function () {
         const detailButton = event.popup.getElement().querySelector('.shelter-detail-button');
         detailButton.addEventListener('click', function () {
           showShelterDetail(shelter);
+        });
+        const routeButton = event.popup.getElement().querySelector('.shelter-route-link');
+        routeButton.addEventListener('click', function () {
+          showShelterDetail(shelter);
+          event.popup.remove();
         });
       });
       marker.addTo(markersLayer);
@@ -595,6 +718,20 @@ document.addEventListener('DOMContentLoaded', function () {
         .setLatLng([40.822, 140.74])
         .setContent(message)
         .openOn(map);
+    });
+
+  fetch('/api/damage_posts')
+    .then(function (response) {
+      if (!response.ok) throw new Error('被害投稿の取得に失敗しました');
+      return response.json();
+    })
+    .then(function (posts) {
+      window.damagePosts = posts;
+      renderDamageMarkers(posts);
+    })
+    .catch(function (error) {
+      console.error(error);
+      window.damagePosts = [];
     });
 
   districtSelect.addEventListener('change', function () {

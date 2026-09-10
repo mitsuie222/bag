@@ -37,6 +37,20 @@
       border: 2px solid #333;
     }
 
+    :root[data-background="black"] body,
+    :root[data-background="black"] .app-header,
+    :root[data-background="black"] .app-title,
+    :root[data-background="black"] .app-title a,
+    :root[data-background="black"] .header-tools,
+    :root[data-background="black"] .main-nav a {
+      color: #fff;
+    }
+
+    :root[data-background="black"] .menu-toggle {
+      color: #fff;
+      background: #333;
+    }
+
     .app-title {
       margin: 0;
       color: #222;
@@ -253,6 +267,7 @@
       function applyBackground(name) {
         const colors = backgrounds[name] || backgrounds.white;
         const root = document.documentElement;
+        root.dataset.background = name;
         root.style.setProperty('--page-background', colors.page);
         root.style.setProperty('--page-text', colors.text);
         root.style.setProperty('--header-background', colors.header);

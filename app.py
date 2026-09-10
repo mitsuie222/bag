@@ -232,7 +232,8 @@ hazards = load_json(HAZARDS_FILE, [])
 
 def seed_demo_damage_posts():
     """地図確認用に青森市内へ集中した仮の被害投稿を生成する"""
-    if any(post.get('latitude') is not None and post.get('longitude') is not None for post in damage_posts):
+    demo_count = sum(1 for post in damage_posts if post.get('is_demo'))
+    if demo_count >= 30:
         return
     randomizer = random.Random(20260910)
     addresses = [
@@ -241,7 +242,7 @@ def seed_demo_damage_posts():
         '青森市筒井一丁目', '青森市小柳四丁目', '青森市浅虫',
         '青森市浪打一丁目'
     ]
-    for index in range(30):
+    for index in range(demo_count, 30):
         latitude = 40.80 + randomizer.uniform(-0.035, 0.035)
         longitude = 140.74 + randomizer.uniform(-0.065, 0.085)
         address = addresses[index % len(addresses)]
@@ -254,18 +255,31 @@ def seed_demo_damage_posts():
             'is_demo': True,
             'created_at': get_japan_time() if 'get_japan_time' in globals() else ''
         })
+    try:
+        with open(POSTS_FILE, 'w', encoding='utf-8') as f:
+            json.dump(damage_posts, f, ensure_ascii=False, indent=2)
+    except OSError:
+        pass
 
 
 seed_demo_damage_posts()
 
 
 def sync_registered_shelter_details():
-    """登録済みJSONの混雑度・設備情報を検索用データへ反映する"""
+    """登録済みJSONの開設状態・混雑度・設備情報を検索用データへ反映する"""
     registered_by_name = {
         item.get('name'): item for item in registered_shelters
     }
+    shelter_by_name = {item.get('name'): item for item in shelters}
+    for registered in registered_shelters:
+        if registered.get('address'):
+            continue
+        source = shelter_by_name.get(registered.get('name'))
+        if source and source.get('address'):
+            registered['address'] = source['address']
     for shelter in shelters:
         registered = registered_by_name.get(shelter.get('name'), {})
+        shelter['is_open'] = registered.get('is_open', True) if registered else True
         registered_status = registered.get('crowd_status')
         csv_status = shelter.get('crowd_status')
         shelter['crowd_status'] = (
@@ -810,23 +824,14 @@ def shelter_register():
         if action == 'delete':
             if existing_index is None:
                 return render_register(error=True, message='登録済みの避難所ではありません。', form_data=form_data)
-            removed = registered_shelters.pop(existing_index)
-            removed_shelter_index = next(
-                (index for index, item in enumerate(shelters)
-                 if item.get('source') == 'custom' and item.get('name') == removed.get('name')),
-                None
-            )
-            removed_shelter = None
-            if removed_shelter_index is not None:
-                removed_shelter = shelters.pop(removed_shelter_index)
+            previous = [dict(item) for item in registered_shelters]
+            registered_shelters[existing_index]['is_open'] = False
             try:
                 save_registered_shelters()
             except OSError:
-                registered_shelters.insert(existing_index, removed)
-                if removed_shelter is not None:
-                    shelters.insert(removed_shelter_index, removed_shelter)
-                return render_register(error=True, message='避難所を削除できませんでした。', form_data=form_data)
-            return render_register(success=True, message='避難所の登録を削除しました。', form_data={})
+                registered_shelters[:] = previous
+                return render_register(error=True, message='避難所を解除できませんでした。', form_data=form_data)
+            return render_register(success=True, message='避難所を解除しました。', form_data={})
 
         crowd_status = request.form.get('crowd_status', '')
         if crowd_status not in CROWD_STATUSES:
@@ -841,6 +846,7 @@ def shelter_register():
             'wheelchair_accessible': request.form.get('wheelchair_accessible') == 'on',
             'multipurpose_toilet': request.form.get('multipurpose_toilet') == 'on',
             'pets_allowed': request.form.get('pets_allowed') == 'on',
+            'is_open': True,
         })
         if existing_index is None:
             registered_shelters.append(record)
@@ -860,6 +866,20 @@ def shelter_register():
 @login_required
 def registered_shelters_list():
     return render_template('search_results.html', results=registered_shelters, registered_only=True)
+
+
+@app.route('/registered_shelters/toggle/<shelter_id>', methods=['POST'])
+@login_required
+def toggle_shelter_status(shelter_id):
+    shelter = next(
+        (item for item in registered_shelters if str(item.get('id')) == shelter_id),
+        None
+    )
+    if shelter is not None:
+        shelter['is_open'] = not (shelter.get('is_open') is not False)
+        save_registered_shelters()
+    return redirect(url_for('registered_shelters_list'))
+
 
 # 避難所検索ページ
 @app.route('/shelter_search')

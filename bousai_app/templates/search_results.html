@@ -21,6 +21,12 @@
   .crowd-満員 { background: #ff9b9b; color: #8b1717; }
   .facility-yes { color: #176d31; font-weight: 700; }
   .facility-no { color: #7c8790; }
+  .opening-status { font-weight: 700; white-space: nowrap; }
+  .opening-status.is-open { color: #c62828; }
+  .opening-status.is-closed { color: #333; }
+  .opening-status-form { margin-top: 6px; }
+  .opening-status-button { padding: 4px 8px; border: 1px solid #9aaabd; border-radius: 4px; background: #f1f5f8; cursor: pointer; font: inherit; font-size: 0.82rem; white-space: nowrap; }
+  .opening-status-button:hover { background: #e2ebf2; }
   .result-links { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 18px; }
 </style>
 
@@ -36,6 +42,7 @@
       <tr>
         <th>No.</th>
         <th>避難所名</th>
+        <th>開設状況</th>
         <th>地域</th>
         <th>地区</th>
         <th>住所</th>
@@ -51,6 +58,14 @@
       <tr>
         <td>{{ shelter.id }}</td>
         <td class="shelter-name">{{ shelter.name }}</td>
+        <td class="opening-status {{ 'is-open' if shelter.is_open != false else 'is-closed' }}">
+          {{ '開設中' if shelter.is_open != false else '閉鎖' }}
+          {% if registered_only %}
+            <form class="opening-status-form" method="post" action="{{ url_for('toggle_shelter_status', shelter_id=shelter.id) }}">
+              <button class="opening-status-button" type="submit">{{ '閉鎖に切り替え' if shelter.is_open != false else '開設中に切り替え' }}</button>
+            </form>
+          {% endif %}
+        </td>
         <td>{{ shelter.district or '未分類' }}</td>
         <td>{{ shelter.area or '未登録' }}</td>
         <td class="shelter-address">{{ shelter.address or '未登録' }}</td>

@@ -1,5 +1,29 @@
 [
   {
+    "id": 9,
+    "target": "全員",
+    "information_type": "発信",
+    "subject": "おしらせ2",
+    "content": "ｑうぇｒちゅいおｐ",
+    "attachment": "",
+    "district": "浪岡",
+    "status": "発信中",
+    "created_at": "2026年09月10日 15:46",
+    "updated_at": "2026年09月10日 15:46"
+  },
+  {
+    "id": 8,
+    "target": "全員",
+    "information_type": "発信",
+    "subject": "おしらせ",
+    "content": "ｂどいあｈｖｐ",
+    "attachment": "",
+    "district": "南部",
+    "status": "発信中",
+    "created_at": "2026年09月10日 15:46",
+    "updated_at": "2026年09月10日 15:46"
+  },
+  {
     "id": 6,
     "target": "職員",
     "information_type": "指示",

@@ -397,9 +397,11 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function popupHtml(shelter) {
+      const isOpen = shelter.is_open !== false;
       return `
         <div style="min-width: 220px; max-width: 280px; line-height: 1.7;">
           <div style="font-weight: 800; font-size: 1.05rem; margin-bottom: 8px; color: #0d3e72;">${escapeHtml(shelter.name)}</div>
+          <div><strong>開設状況:</strong> ${isOpen ? '開設中' : '未開設'}</div>
           <div><strong>住所:</strong> ${escapeHtml(shelter.address || '未登録')}</div>
           <div><strong>収容人数:</strong> ${escapeHtml(shelter.capacity ?? '未登録')}人</div>
           <div><strong>津波:</strong> ${escapeHtml(shelter.tsunami || '未登録')}</div>
@@ -416,9 +418,9 @@ document.addEventListener('DOMContentLoaded', function() {
           if (shelter.lat == null || shelter.lng == null) return;
           const marker = L.circleMarker([shelter.lat, shelter.lng], {
             radius: 8,
-            color: '#d11a2a',
+            color: shelter.is_open !== false ? '#d11a2a' : '#111',
             weight: 2,
-            fillColor: '#ff3b30',
+            fillColor: shelter.is_open !== false ? '#ff3b30' : '#111',
             fillOpacity: 0.9
           }).bindPopup(popupHtml(shelter));
           marker.addTo(markersLayer);
