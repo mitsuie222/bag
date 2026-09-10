@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+
+{% block title %}新規避難所追加 - 防災アプリ{% endblock %}
+
+{% block content %}
+<style>
+  .add-panel { max-width: 900px; margin: 0 auto; padding: 24px; background: #fff; border: 1px solid #bbb; }
+  .add-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  .add-form { display: grid; gap: 12px; }
+  .add-form label { font-weight: 700; }
+  .add-form input[type="text"], .add-form textarea, .add-form input[type="file"] { width: 100%; padding: 10px; border: 1px solid #999; border-radius: 6px; font: inherit; }
+  .add-form textarea { min-height: 150px; resize: vertical; }
+  .image-preview { display: flex; align-items: center; justify-content: center; min-height: 230px; border: 1px dashed #999; background: #f7f9fb; color: #687887; }
+  .image-preview img { display: none; max-width: 100%; max-height: 230px; object-fit: contain; }
+  .amenities { display: grid; gap: 8px; }
+  .amenity { padding: 10px; border: 1px solid #bbb; border-radius: 6px; cursor: pointer; }
+  .add-button { padding: 12px 20px; border: 1px solid #597fa0; border-radius: 6px; background: #dceaf8; cursor: pointer; font: inherit; }
+  .message { padding: 10px; margin-bottom: 14px; }
+  .message.error { color: #a40000; background: #fff0f0; border: 1px solid #d66; }
+  @media (max-width: 700px) { .add-grid { grid-template-columns: 1fr; } }
+</style>
+
+<section class="add-panel">
+  <h2>新規避難所追加</h2>
+  <p>候補一覧にない避難所の場所を登録します。</p>
+  {% if message %}<div class="message error" role="alert">{{ message }}</div>{% endif %}
+  <form class="add-form" method="post" enctype="multipart/form-data">
+    <div class="add-grid">
+      <div class="add-form">
+        <label for="name">避難所名</label>
+        <input id="name" name="name" type="text" required value="{{ form_data.get('name', '') }}">
+        <label for="address">住所</label>
+        <input id="address" name="address" type="text" required value="{{ form_data.get('address', '') }}">
+        <label for="description">詳細情報</label>
+        <textarea id="description" name="description">{{ form_data.get('description', '') }}</textarea>
+        <fieldset class="amenities">
+          <legend>設備</legend>
+          <label class="amenity"><input type="checkbox" name="pet"> ペット可</label>
+          <label class="amenity"><input type="checkbox" name="toilet"> 多目的トイレ</label>
+          <label class="amenity"><input type="checkbox" name="wheelchair"> 車いす対応</label>
+        </fieldset>
+      </div>
+      <div class="add-form">
+        <label for="image">画像（必須）</label>
+        <input id="image" name="image" type="file" accept=".jpg,.jpeg,.png,.gif,.webp" required>
+        <div id="imagePreview" class="image-preview">
+          <span>選択した画像をプレビューします</span>
+          <img id="previewImage" alt="避難所画像のプレビュー">
+        </div>
+      </div>
+    </div>
+    <button class="add-button" type="submit">避難所を追加する</button>
+  </form>
+</section>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  const input = document.getElementById('image');
+  const image = document.getElementById('previewImage');
+  const placeholder = document.querySelector('#imagePreview span');
+  input.addEventListener('change', function () {
+    const file = this.files[0];
+    if (!file) return;
+    image.src = URL.createObjectURL(file);
+    image.style.display = 'block';
+    placeholder.style.display = 'none';
+  });
+});
+</script>
+{% endblock %}

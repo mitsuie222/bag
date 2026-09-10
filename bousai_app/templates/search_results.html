@@ -1,19 +1,73 @@
 {% extends "base.html" %}
 
 {% block content %}
-<h2>検索結果</h2>
+<style>
+  .results-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+  .results-count { color: #596979; font-size: 0.95rem; }
+  .table-scroll { overflow-x: auto; border: 1px solid #aeb8c2; background: #fff; }
+  .shelter-table { width: 100%; min-width: 980px; border-collapse: collapse; font-size: 0.95rem; }
+  .shelter-table th,
+  .shelter-table td { padding: 11px 12px; border: 1px solid #c4ccd4; text-align: left; vertical-align: middle; }
+  .shelter-table th { position: sticky; top: 0; z-index: 1; background: #e7f0f8; color: #183b5c; white-space: nowrap; }
+  .shelter-table tbody tr:nth-child(even) { background: #f8fbfd; }
+  .shelter-table tbody tr:hover { background: #eef7ff; }
+  .shelter-name { font-weight: 700; color: #123e67; }
+  .shelter-address { min-width: 260px; }
+  .crowd-badge { display: inline-block; min-width: 74px; padding: 5px 8px; border-radius: 4px; text-align: center; font-weight: 700; }
+  .crowd-未入力 { background: #edf0f2; color: #58636d; }
+  .crowd-空いている { background: #c9efcf; color: #176d31; }
+  .crowd-やや混雑 { background: #fff0a8; color: #755d00; }
+  .crowd-混雑 { background: #ffc27d; color: #864100; }
+  .crowd-満員 { background: #ff9b9b; color: #8b1717; }
+  .facility-yes { color: #176d31; font-weight: 700; }
+  .facility-no { color: #7c8790; }
+  .result-links { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 18px; }
+</style>
+
+<div class="results-heading">
+  <h2>{{ '登録済み避難所一覧' if registered_only else '検索結果' }}</h2>
+  <span class="results-count">{{ results|length }}件</span>
+</div>
 
 {% if results %}
-  <ul>
+  <div class="table-scroll">
+  <table class="shelter-table">
+    <thead>
+      <tr>
+        <th>No.</th>
+        <th>避難所名</th>
+        <th>地域</th>
+        <th>地区</th>
+        <th>住所</th>
+        <th>混雑度</th>
+        <th>♿ 車いす</th>
+        <th>🚻 トイレ</th>
+        <th>🐾 ペット</th>
+      </tr>
+    </thead>
+    <tbody>
     {% for shelter in results %}
-    <li>{{ shelter.name }}</li>
+      {% set crowd = shelter.crowd_status or '未入力' %}
+      <tr>
+        <td>{{ shelter.id }}</td>
+        <td class="shelter-name">{{ shelter.name }}</td>
+        <td>{{ shelter.district or '未分類' }}</td>
+        <td>{{ shelter.area or '未登録' }}</td>
+        <td class="shelter-address">{{ shelter.address or '未登録' }}</td>
+        <td><span class="crowd-badge crowd-{{ crowd|replace(' ', '') }}">{{ crowd }}</span></td>
+        <td class="{{ 'facility-yes' if shelter.wheelchair_accessible else 'facility-no' }}">{{ '対応' if shelter.wheelchair_accessible else '未対応' }}</td>
+        <td class="{{ 'facility-yes' if shelter.multipurpose_toilet else 'facility-no' }}">{{ 'あり' if shelter.multipurpose_toilet else 'なし' }}</td>
+        <td class="{{ 'facility-yes' if shelter.pets_allowed else 'facility-no' }}">{{ '可' if shelter.pets_allowed else '不可' }}</td>
+      </tr>
     {% endfor %}
-  </ul>
+    </tbody>
+  </table>
+  </div>
 {% else %}
   <p>該当する避難所が見つかりませんでした</p>
 {% endif %}
 
-<p>
+<p class="result-links">
   <a href="/shelter_search">検索画面に戻る</a> |
   <a href="/">トップページへ戻る</a>
 </p>

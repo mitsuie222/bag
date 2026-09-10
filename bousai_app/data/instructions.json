@@ -1,19 +1,34 @@
 [
   {
+    "id": 6,
+    "target": "職員",
+    "information_type": "指示",
+    "subject": "職員あつまれー",
+    "content": "県庁こい",
+    "attachment": "",
+    "district": "北部、西部、中央（1）、東部",
+    "status": "発信中",
+    "created_at": "2026年09月10日 12:34",
+    "updated_at": "2026年09月10日 12:34"
+  },
+  {
+    "id": 5,
+    "target": "住民",
+    "information_type": "発信",
+    "subject": "やばい",
+    "content": "もうやばい",
+    "attachment": "",
+    "district": "北部、西部、浪岡、中央（1）、中央（2）、東部、南部",
+    "status": "発信中",
+    "created_at": "2026年09月10日 12:08",
+    "updated_at": "2026年09月10日 12:08"
+  },
+  {
     "id": 4,
     "target": "住民",
     "content": "B避難所へ避難してください",
     "shelter": "片瀬小学校",
     "status": "解除",
-    "created_at": "2026年07月14日 18:38",
-    "updated_at": "2026年07月14日 18:38"
-  },
-  {
-    "id": 3,
-    "target": "防災課",
-    "content": "A地区の現地確認",
-    "shelter": "",
-    "status": "完了",
     "created_at": "2026年07月14日 18:38",
     "updated_at": "2026年07月14日 18:38"
   },

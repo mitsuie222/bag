@@ -67,6 +67,10 @@
     color: var(--text);
   }
 
+  .filter-box {
+    flex-wrap: wrap;
+  }
+
   .map-shell {
     margin-top: 14px;
     border-radius: 18px;
@@ -74,6 +78,124 @@
     border: 1px solid rgba(13,62,114,0.08);
     background: #dfeef7;
   }
+
+  .search-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1.35fr) minmax(300px, 0.65fr);
+    gap: 16px;
+    margin-top: 14px;
+  }
+
+  .search-layout .map-shell { margin-top: 0; }
+
+  .shelter-detail-panel {
+    min-height: 620px;
+    padding: 18px;
+    border: 1px solid rgba(13,62,114,0.12);
+    border-radius: 14px;
+    background: #fff;
+    animation: detailPanelEnter 0.3s ease both;
+  }
+
+  @keyframes detailPanelEnter {
+    from { opacity: 0; transform: translateX(12px); }
+    to { opacity: 1; transform: translateX(0); }
+  }
+
+  .route-hint { color: var(--muted); font-size: 0.9rem; }
+
+  .route-summary {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    margin: 14px 0;
+  }
+
+  .route-stat {
+    padding: 12px;
+    border: 1px solid #cbd7e2;
+    border-radius: 8px;
+    text-align: center;
+    background: #f7fbff;
+  }
+
+  .route-stat strong { display: block; font-size: 1.3rem; color: var(--blue-900); }
+
+  .crowd-gauge {
+    position: relative;
+    width: 180px;
+    height: 92px;
+    margin: 12px auto 8px;
+    overflow: hidden;
+    border-radius: 180px 180px 0 0;
+    background: conic-gradient(from 270deg at 50% 100%, #34b56b 0deg, #f5cf4f 55deg, #f08d3e 115deg, #de3f3f 180deg, transparent 180deg);
+  }
+
+  .crowd-gauge::after {
+    content: '';
+    position: absolute;
+    left: 35px;
+    right: 35px;
+    bottom: 0;
+    height: 58px;
+    border-radius: 80px 80px 0 0;
+    background: white;
+  }
+
+  .crowd-needle {
+    position: absolute;
+    z-index: 2;
+    left: 50%;
+    bottom: 0;
+    width: 4px;
+    height: 72px;
+    background: #333;
+    transform-origin: 50% 100%;
+    transform: translateX(-50%) rotate(-65deg);
+    transition: transform 0.55s ease;
+  }
+
+  .crowd-needle::after {
+    content: '';
+    position: absolute;
+    left: -6px;
+    bottom: -6px;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: #333;
+  }
+
+  .crowd-label { text-align: center; font-weight: 800; }
+
+  .facility-status {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 6px;
+    margin: 14px 0;
+  }
+
+  .facility-status div {
+    padding: 8px 4px;
+    border-radius: 8px;
+    text-align: center;
+    font-size: 0.82rem;
+    background: #edf0f2;
+    filter: grayscale(1);
+    opacity: 0.55;
+  }
+
+  .facility-status div.is-available { background: #d9f4e2; filter: none; opacity: 1; }
+  .facility-icon { display: block; font-size: 1.55rem; }
+
+  .checkin-box { margin-top: 16px; padding-top: 14px; border-top: 1px solid #d4dce4; }
+  .checkin-controls { display: flex; gap: 8px; }
+  .checkin-controls input { min-width: 0; flex: 1; padding: 8px; border: 1px solid #9aaabd; border-radius: 6px; }
+  .checkin-button { padding: 8px 12px; border: 1px solid #6a9b7b; border-radius: 6px; background: #d9f4e2; cursor: pointer; }
+  .checkin-button.is-complete { animation: checkinPulse 0.7s ease; }
+  .checkin-list { margin: 10px 0 0; padding-left: 20px; max-height: 130px; overflow-y: auto; }
+
+  @keyframes checkinPulse { 50% { transform: scale(1.08); background: #8ee0a8; } }
 
   #shelterMap {
     width: 100%;
@@ -99,6 +221,66 @@
     box-shadow: 0 0 0 3px rgba(255,59,48,0.16);
   }
 
+  .damage-legend-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: #8e44ad;
+    display: inline-block;
+    box-shadow: 0 0 0 3px rgba(142,68,173,0.18);
+  }
+
+  .shelter-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 10px;
+  }
+
+  .shelter-actions button,
+  .shelter-actions a {
+    flex: 1;
+    border: 0;
+    border-radius: 8px;
+    padding: 8px 10px;
+    font: inherit;
+    font-size: 0.88rem;
+    font-weight: 700;
+    text-align: center;
+    cursor: pointer;
+  }
+
+  .shelter-detail-button {
+    background: #e8f3ff;
+    color: var(--blue-900);
+  }
+
+  .shelter-route-link {
+    background: var(--blue-700);
+    color: white;
+  }
+
+  .selected-shelter {
+    display: none;
+    margin-top: 14px;
+    padding: 16px;
+    border: 1px solid rgba(29, 130, 210, 0.18);
+    border-radius: 12px;
+    background: #f7fbff;
+  }
+
+  .selected-shelter.is-visible {
+    display: block;
+  }
+
+  .selected-shelter h3 {
+    margin: 0 0 8px;
+    color: var(--blue-900);
+  }
+
+  .selected-shelter p {
+    margin: 4px 0;
+  }
+
   @media (max-width: 640px) {
     .search-header {
       align-items: flex-start;
@@ -108,6 +290,9 @@
     #shelterMap {
       height: 480px;
     }
+
+    .search-layout { grid-template-columns: 1fr; }
+    .shelter-detail-panel { min-height: 0; }
   }
 </style>
 
@@ -124,20 +309,31 @@
         <select id="districtSelect" aria-label="地域を選択">
           <option value="全域">全域</option>
           <option value="北部">北部</option>
-          <option value="西部">西部</option>
-          <option value="中央部">中央部</option>
+          <option value="中央(1)">中央(1)</option>
+          <option value="中央(2)">中央(2)</option>
           <option value="東部">東部</option>
-          <option value="南東部">南東部</option>
           <option value="南部">南部</option>
           <option value="浪岡地区">浪岡地区</option>
+        </select>
+        <span>地区選択</span>
+        <select id="areaSelect" aria-label="地区を選択" disabled>
+          <option value="">地域を先に選択</option>
         </select>
       </label>
     </div>
 
-    <div class="map-shell">
-      <div id="shelterMap"></div>
+    <div class="search-layout">
+      <div>
+        <div class="map-shell"><div id="shelterMap"></div></div>
+        <p class="route-hint">地図をクリックして出発地点を指定すると、選択した避難所までの徒歩ルートを表示します。</p>
+      </div>
+      <aside id="shelterDetailPanel" class="shelter-detail-panel" aria-live="polite">
+        <h2>避難所の詳細</h2>
+        <p>避難所の赤いマーカーを選択してください。</p>
+        <p class="route-hint">出発地点を指定するには左の地図をクリックしてください。</p>
+      </aside>
     </div>
-    <div class="legend"><span class="legend-dot"></span>避難所（赤丸）</div>
+    <div class="legend"><span class="legend-dot"></span>避難所（赤丸） <span class="damage-legend-dot"></span>被害投稿（紫）</div>
   </div>
 </div>
 
@@ -160,6 +356,30 @@ document.addEventListener('DOMContentLoaded', function () {
   const markersLayer = L.layerGroup().addTo(map);
   const boundaryLayer = L.layerGroup().addTo(map);
   const districtSelect = document.getElementById('districtSelect');
+  const areaSelect = document.getElementById('areaSelect');
+  const detailPanel = document.getElementById('shelterDetailPanel');
+  const routeLayer = L.layerGroup().addTo(map);
+  let startPoint = null;
+  let selectedShelterData = null;
+  let routeRequestId = 0;
+  let routeLine = null;
+
+  map.on('click', function (event) {
+    startPoint = event.latlng;
+    routeLayer.clearLayers();
+    routeLine = null;
+    L.circleMarker(startPoint, {
+      radius: 7,
+      color: '#174a9c',
+      fillColor: '#4d90fe',
+      fillOpacity: 1
+    }).bindPopup('出発地点').openPopup().addTo(routeLayer);
+    if (selectedShelterData) {
+      showShelterDetail(selectedShelterData);
+    } else {
+      detailPanel.innerHTML = '<h2>出発地点を設定しました</h2><p>避難所の赤いマーカーを選択すると徒歩ルートを表示します。</p>';
+    }
+  });
 
   const districtBoundaries = {
     '北部': [[40.857, 140.705], [40.865, 140.725], [40.865, 140.765], [40.845, 140.782], [40.835, 140.772], [40.832, 140.738], [40.842, 140.71], [40.857, 140.705]],
@@ -182,24 +402,137 @@ document.addEventListener('DOMContentLoaded', function () {
       <div style="min-width: 200px; max-width: 240px; line-height: 1.7;">
         <div style="font-weight: 800; font-size: 1.05rem; margin-bottom: 8px; color: #0d3e72;">${escapeHtml(shelter.name)}</div>
         <div><strong>地区:</strong> ${escapeHtml(shelter.district || '未登録')}</div>
+        <div><strong>地区名:</strong> ${escapeHtml(shelter.area || '未登録')}</div>
         <div><strong>住所:</strong> ${escapeHtml(shelter.address || '未登録')}</div>
         <div><strong>収容人数:</strong> ${escapeHtml(shelter.capacity ?? '未登録')}人</div>
         <div><strong>津波:</strong> ${escapeHtml(shelter.tsunami || '未登録')}</div>
         <div><strong>土砂災害:</strong> ${escapeHtml(shelter.landslide || '未登録')}</div>
         <div style="margin-top: 8px; color: #42566d;">${escapeHtml(shelter.description || '')}</div>
+        <div class="shelter-actions">
+          <button type="button" class="shelter-detail-button" data-shelter-id="${escapeHtml(shelter.id)}">詳細</button>
+          <button type="button" class="shelter-route-link" data-route-shelter-id="${escapeHtml(shelter.id)}">サイト内ルート</button>
+        </div>
       </div>
     `;
   }
 
-  function renderMarkers(selectedDistrict) {
+  function showShelterDetail(shelter) {
+    selectedShelterData = shelter;
+    const crowdIndex = {
+      '空いている': 0,
+      'やや空いている': 25,
+      'やや混雑': 50,
+      '混雑': 75,
+      '満員': 100
+    }[shelter.crowd_status || '空いている'] || 0;
+    const crowdAngle = -65 + (130 * crowdIndex / 100);
+    detailPanel.innerHTML = `
+      <h3>${escapeHtml(shelter.name)}</h3>
+      <p><strong>地区:</strong> ${escapeHtml(shelter.district || '未登録')}</p>
+      <p><strong>地区名:</strong> ${escapeHtml(shelter.area || '未登録')}</p>
+      <div class="route-summary" id="routeSummary">
+        <div class="route-stat"><strong id="walkTime">--</strong>徒歩</div>
+        <div class="route-stat"><strong id="walkDistance">--</strong>距離</div>
+      </div>
+      <div class="crowd-gauge" aria-label="混雑度 ${escapeHtml(shelter.crowd_status || '空いている')}"><span class="crowd-needle" style="transform: translateX(-50%) rotate(${crowdAngle}deg);"></span></div>
+      <div class="crowd-label">混雑度: ${escapeHtml(shelter.crowd_status || '空いている')}</div>
+      <div class="facility-status">
+        <div class="${shelter.multipurpose_toilet ? 'is-available' : ''}"><span class="facility-icon">🚻</span>多目的トイレ<br>${shelter.multipurpose_toilet ? 'あり' : 'なし'}</div>
+        <div class="${shelter.pets_allowed ? 'is-available' : ''}"><span class="facility-icon">🐕</span>ペット<br>${shelter.pets_allowed ? '可' : '不可'}</div>
+        <div class="${shelter.wheelchair_accessible ? 'is-available' : ''}"><span class="facility-icon">♿</span>車いす<br>${shelter.wheelchair_accessible ? '対応' : '未対応'}</div>
+      </div>
+      <p><strong>収容人数:</strong> ${escapeHtml(shelter.capacity ?? '未登録')}人</p>
+      <p><strong>津波:</strong> ${escapeHtml(shelter.tsunami || '未登録')}</p>
+      <p><strong>土砂災害:</strong> ${escapeHtml(shelter.landslide || '未登録')}</p>
+      <p>${escapeHtml(shelter.description || '')}</p>
+      <div class="checkin-box">
+        <strong>チェックイン</strong>
+        <div class="checkin-controls">
+          <input id="checkinName" type="text" maxlength="40" placeholder="名前（任意）">
+          <button id="checkinButton" class="checkin-button" type="button">チェックイン</button>
+        </div>
+        <ul id="checkinList" class="checkin-list"><li>チェックインした人はいません</li></ul>
+      </div>
+    `;
+    document.getElementById('checkinButton').addEventListener('click', function () {
+      const name = document.getElementById('checkinName').value.trim() || '匿名の利用者';
+      const list = document.getElementById('checkinList');
+      const empty = list.querySelector('li');
+      if (empty && empty.textContent === 'チェックインした人はいません') list.innerHTML = '';
+      const entry = document.createElement('li');
+      entry.textContent = `${name}（いまチェックイン）`;
+      list.prepend(entry);
+      this.classList.remove('is-complete');
+      void this.offsetWidth;
+      this.classList.add('is-complete');
+    });
+    updateWalkingRoute(shelter);
+  }
+
+  function updateWalkingRoute(shelter) {
+    const currentRequestId = ++routeRequestId;
+    if (!startPoint) return;
+    const walkTime = document.getElementById('walkTime');
+    const walkDistance = document.getElementById('walkDistance');
+    walkTime.textContent = '取得中';
+    walkDistance.textContent = '取得中';
+    const coordinates = `${startPoint.lng},${startPoint.lat};${shelter.lng},${shelter.lat}`;
+    const url = `https://router.project-osrm.org/route/v1/driving/${coordinates}?overview=full&geometries=geojson&steps=false`;
+    fetch(url)
+      .then(response => {
+        if (!response.ok) throw new Error('route request failed');
+        return response.json();
+      })
+      .then(data => {
+        if (currentRequestId !== routeRequestId || !data.routes?.length) throw new Error('route unavailable');
+        const route = data.routes[0];
+        if (routeLine) routeLayer.removeLayer(routeLine);
+        routeLine = L.geoJSON(route.geometry, { style: { color: '#e53935', weight: 6, opacity: 0.9 } }).addTo(routeLayer);
+        walkDistance.textContent = route.distance >= 1000 ? `${(route.distance / 1000).toFixed(1)}km` : `${Math.round(route.distance)}m`;
+        walkTime.textContent = `${Math.max(1, Math.ceil(route.distance / 80))}分`;
+      })
+      .catch(() => {
+        if (currentRequestId !== routeRequestId) return;
+        walkTime.textContent = '--';
+        walkDistance.textContent = '--';
+        detailPanel.insertAdjacentHTML('beforeend', '<p class="route-hint">徒歩ルートを取得できませんでした。地図上の出発地点と避難所の位置を確認してください。</p>');
+      });
+  }
+
+  function getFilteredShelters(selectedDistrict, selectedArea) {
+    return allShelters.filter(function (shelter) {
+      const matchesDistrict = selectedDistrict === '全域'
+        || shelter.district === selectedDistrict;
+      const matchesArea = !selectedArea || shelter.area === selectedArea;
+      return matchesDistrict && matchesArea;
+    });
+  }
+
+  function updateAreaOptions(selectedDistrict) {
+    const areas = [...new Set(
+      allShelters
+        .filter(shelter => selectedDistrict === '全域' || shelter.district === selectedDistrict)
+        .map(shelter => shelter.area)
+        .filter(Boolean)
+    )].sort((left, right) => left.localeCompare(right, 'ja'));
+
+    areaSelect.innerHTML = '<option value="">すべての地区</option>';
+    areas.forEach(function (area) {
+      const option = document.createElement('option');
+      option.value = area;
+      option.textContent = area;
+      areaSelect.appendChild(option);
+    });
+    areaSelect.disabled = areas.length === 0;
+  }
+
+  function renderMarkers(selectedDistrict, selectedArea) {
     markersLayer.clearLayers();
     boundaryLayer.clearLayers();
 
-    const shelters = selectedDistrict === '全域'
-      ? allShelters
-      : allShelters.filter(s => s.district === selectedDistrict);
+    const selectedShelters = getFilteredShelters(selectedDistrict, selectedArea);
 
-    shelters.forEach(function (shelter) {
+    allShelters.forEach(function (shelter) {
       if (!shelter.lat || !shelter.lng) return;
 
       const marker = L.circleMarker([shelter.lat, shelter.lng], {
@@ -211,10 +544,16 @@ document.addEventListener('DOMContentLoaded', function () {
       });
 
       marker.bindPopup(popupHtml(shelter));
+      marker.on('popupopen', function (event) {
+        const detailButton = event.popup.getElement().querySelector('.shelter-detail-button');
+        detailButton.addEventListener('click', function () {
+          showShelterDetail(shelter);
+        });
+      });
       marker.addTo(markersLayer);
     });
 
-    if (selectedDistrict !== '全域' && districtBoundaries[selectedDistrict]) {
+    if (selectedDistrict !== '全域' && !selectedArea && districtBoundaries[selectedDistrict]) {
       const polygon = L.polygon(districtBoundaries[selectedDistrict], {
         color: '#ff3b30',
         weight: 3,
@@ -227,8 +566,9 @@ document.addEventListener('DOMContentLoaded', function () {
       return;
     }
 
-    if (shelters.length > 0) {
-      const bounds = L.latLngBounds(shelters.map(s => [s.lat, s.lng]));
+    const sheltersWithCoordinates = selectedShelters.filter(shelter => shelter.lat && shelter.lng);
+    if (sheltersWithCoordinates.length > 0) {
+      const bounds = L.latLngBounds(sheltersWithCoordinates.map(s => [s.lat, s.lng]));
       map.fitBounds(bounds.pad(0.22));
     } else {
       map.setView([40.822, 140.74], 12);
@@ -244,7 +584,8 @@ document.addEventListener('DOMContentLoaded', function () {
     })
     .then(function (data) {
       window.allShelters = data;
-      renderMarkers('全域');
+      updateAreaOptions('全域');
+      renderMarkers('全域', '');
     })
     .catch(function (error) {
       console.error(error);
@@ -257,7 +598,13 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 
   districtSelect.addEventListener('change', function () {
-    renderMarkers(this.value);
+    updateAreaOptions(this.value);
+    areaSelect.value = '';
+    renderMarkers(this.value, '');
+  });
+
+  areaSelect.addEventListener('change', function () {
+    renderMarkers(districtSelect.value, this.value);
   });
 });
 </script>

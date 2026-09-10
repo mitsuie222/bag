@@ -1,6 +1,212 @@
 {% extends "base.html" %}
 
 {% block content %}
+<style>
+  .report-card,
+  .disaster-card {
+    background: rgba(255,255,255,0.84);
+    border: 1px solid rgba(13, 62, 114, 0.12);
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 24px;
+  }
+
+  .report-form textarea {
+    width: 100%;
+    min-height: 150px;
+    resize: vertical;
+    padding: 12px;
+    border: 1px solid #9aaabd;
+    border-radius: 8px;
+  }
+
+  .report-controls,
+  .report-actions,
+  .disaster-controls {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-top: 12px;
+  }
+
+  .report-button,
+  .camera-button,
+  .disaster-controls select {
+    border: 1px solid #8998a6;
+    border-radius: 6px;
+    padding: 9px 14px;
+    background: #dceaf8;
+    color: #222;
+    cursor: pointer;
+  }
+
+  .file-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 10px;
+  }
+
+  .file-item {
+    max-width: 100%;
+    padding: 7px 10px;
+    border: 1px solid #9aaabd;
+    overflow-wrap: anywhere;
+  }
+
+  .form-message { margin-top: 10px; padding: 8px; }
+  .form-message.error { color: #a40000; background: #fff0f0; border: 1px solid #d66; }
+  .form-message.success { color: #126b39; background: #effaf2; border: 1px solid #65a878; }
+
+  .camera-dialog {
+    width: min(92vw, 620px);
+    border: 2px solid #333;
+    padding: 16px;
+  }
+
+  .camera-dialog::backdrop { background: rgba(0,0,0,0.6); }
+  .camera-preview { width: 100%; max-height: 55vh; background: #111; }
+
+  .disaster-status { color: var(--muted); }
+
+  .home-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1.45fr) minmax(300px, 0.95fr);
+    gap: 28px;
+    align-items: start;
+  }
+
+  .home-left,
+  .home-right { min-width: 0; }
+
+  .home-left { display: flex; flex-direction: column; }
+  #bulletinCard { order: 3; }
+  #reportCard { order: 1; }
+  #phoneCard { order: 2; }
+
+  .home-left .report-card,
+  .home-right .card { margin-bottom: 18px; }
+
+  .home-right .map-box { height: 275px; }
+  .home-right #shelterMap { min-height: 275px; }
+  .home-right .map-card .section-head { padding: 12px 16px; font-size: 1.15rem; }
+  .home-right .weather-card { min-height: 260px; padding: 16px; }
+  .home-right .weather-header { align-items: flex-start; }
+  .home-right .weather-title { font-size: 1.15rem; }
+
+  .report-form { display: grid; gap: 10px; }
+  .report-input-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1.2fr) minmax(190px, 0.9fr);
+    gap: 16px;
+    align-items: stretch;
+  }
+
+  .report-comment textarea { min-height: 220px; height: 100%; }
+  .report-file-box {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    min-height: 220px;
+    padding: 14px;
+    border: 1px solid #cbd3dc;
+    background: #fff;
+  }
+
+  .report-file-box input[type="file"] { width: 100%; }
+  .report-file-box .camera-button { width: 100%; margin-top: auto; }
+  .report-card { padding: 16px; }
+  .report-card .section-head { padding: 0 0 12px; font-size: 1.55rem; }
+  .phone-card p { margin-bottom: 0; line-height: 1.55; }
+
+  @media (max-width: 800px) {
+    .home-grid { grid-template-columns: 1fr; gap: 14px; }
+  }
+
+  @media (max-width: 560px) {
+    .report-input-grid { grid-template-columns: 1fr; }
+    .report-comment textarea,
+    .report-file-box { min-height: 160px; }
+  }
+</style>
+
+<div class="home-grid">
+  <div class="home-left">
+<section id="bulletinCard" class="report-card" aria-labelledby="bulletinTitle">
+  <h2 id="bulletinTitle" class="section-head">発信履歴</h2>
+  {% if bulletin_posts %}
+    <div class="file-list">
+      {% for post in bulletin_posts %}
+        <article class="file-item">
+          <strong>{{ post.subject or '発信' }}</strong>
+          <div>{{ post.content }}</div>
+          <small>{{ post.created_at|instruction_time }} / {{ post.district or '全地区' }} / 対象: {{ post.target or '未指定' }}</small>
+        </article>
+      {% endfor %}
+    </div>
+  {% else %}
+    <p>現在、発信履歴はありません。</p>
+  {% endif %}
+</section>
+
+<section id="reportCard" class="report-card" aria-labelledby="reportTitle">
+  <h2 id="reportTitle" class="section-head">災害・被害投稿</h2>
+  <form id="damagePostForm" class="report-form" method="post" action="/" enctype="multipart/form-data">
+    <div class="report-input-grid">
+      <div class="report-comment">
+        <label for="comment">コメント</label>
+        <textarea id="comment" name="comment" placeholder="コメントを記入してください">{{ request.form.get('comment', '') if request.method == 'POST' else '' }}</textarea>
+        <label for="damageAddress">発生場所の住所</label>
+        <input id="damageAddress" name="address" type="text" placeholder="例: 青森市古川三丁目" required value="{{ request.form.get('address', '') if request.method == 'POST' else '' }}">
+      </div>
+      <div class="report-file-box">
+        <label for="attachment">ファイルを選択してください</label>
+        <input id="attachment" name="attachment" type="file" accept=".jpg,.jpeg,.png,.gif,.webp,.bmp,.heic,.mp4,.mov,.avi,.webm,.mkv,.m4v" multiple>
+        <div>動画・画像のみ選択可</div>
+        <button id="cameraAttachment" class="camera-button" type="button">カメラ起動</button>
+      </div>
+    </div>
+    <div>最大3個まで選択できます</div>
+    <div id="fileList" class="file-list" aria-live="polite"></div>
+    <div class="report-actions">
+      <button id="clearReport" class="report-button" type="button" aria-label="コメントとファイルをクリア">クリア</button>
+      <button class="report-button" type="submit">投稿</button>
+    </div>
+    {% if message %}<div class="form-message {{ 'error' if error else 'success' }}" role="status">{{ message }}</div>{% endif %}
+    <div id="clientMessage" class="form-message" role="alert" hidden></div>
+  </form>
+</section>
+
+<section id="phoneCard" class="report-card phone-card" aria-labelledby="phoneTitle">
+  <h2 id="phoneTitle" class="section-head">電話で被害を知らせる</h2>
+  <div class="report-actions">
+    <button id="phoneButton" class="report-button" type="button">電話アプリを起動</button>
+    <span>TEL：017-000-0000</span>
+  </div>
+  <p>災害や被害状況を市の防災対策課へ知らせるための専用ダイヤルです。電話対応はAIが行うので、AIの指示に従って内容を話してください。災害等に関係のない連絡は極力控えてください。</p>
+</section>
+
+  </div>
+  <div class="home-right">
+
+<dialog id="cameraDialog" class="camera-dialog">
+  <video id="cameraPreview" class="camera-preview" autoplay playsinline muted></video>
+  <div class="report-actions">
+    <button id="takePhoto" class="report-button" type="button">写真を撮影</button>
+    <button id="closeCamera" class="report-button" type="button">閉じる</button>
+  </div>
+</dialog>
+
+<dialog id="phoneDialog" class="camera-dialog">
+  <p>電話番号を確認してください。</p>
+  <input value="017-000-0000" readonly aria-label="電話番号">
+  <div class="report-actions">
+    <button id="closePhone" class="report-button" type="button">閉じる</button>
+    <a class="report-button" href="tel:0170000000">電話アプリを開く</a>
+  </div>
+</dialog>
+
 <div class="card map-card">
   <div class="section-head">
     <span class="section-icon" aria-hidden="true">📍</span>
@@ -17,11 +223,25 @@
       <span class="section-icon" aria-hidden="true">🌤️</span>
       <span>青森市 気象警報・注意報</span>
     </div>
-    <div class="auto-update">↻ 10分おき自動更新</div>
+    <div class="disaster-controls">
+      <label for="disasterType">災害情報</label>
+      <select id="disasterType">
+        <option value="tsunami">津波</option>
+        <option value="flood" selected>河川氾濫</option>
+        <option value="road_flood">道路冠水</option>
+        <option value="landslide">土砂崩れ</option>
+        <option value="snow">積雪</option>
+        <option value="bear">熊などの獣害</option>
+      </select>
+      <span id="mapStatus" class="disaster-status" role="status">読み込み中</span>
+    </div>
   </div>
 
   <div id="weatherContent" class="weather-content">
     <div class="weather-item"><span class="status-dot"></span>読み込み中...</div>
+  </div>
+</div>
+
   </div>
 </div>
 
@@ -30,6 +250,132 @@
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+    const allowedExtensions = new Set(['.jpg', '.jpeg', '.png', '.gif', '.webp', '.bmp', '.heic', '.mp4', '.mov', '.avi', '.webm', '.mkv', '.m4v']);
+    const reportForm = document.getElementById('damagePostForm');
+    const attachment = document.getElementById('attachment');
+    const fileList = document.getElementById('fileList');
+    const clientMessage = document.getElementById('clientMessage');
+    let selectedFiles = [];
+
+    function showClientMessage(message, isError) {
+      clientMessage.hidden = !message;
+      clientMessage.textContent = message;
+      clientMessage.className = `form-message ${isError ? 'error' : 'success'}`;
+    }
+
+    function renderFiles() {
+      fileList.innerHTML = '';
+      const transfer = new DataTransfer();
+      selectedFiles.forEach(file => transfer.items.add(file));
+      attachment.files = transfer.files;
+      selectedFiles.forEach(function (file, index) {
+        const item = document.createElement('span');
+        item.className = 'file-item';
+        item.textContent = `${index + 1}. ${file.name}`;
+        fileList.appendChild(item);
+      });
+    }
+
+    attachment.addEventListener('change', function () {
+      const files = Array.from(this.files);
+      if (files.length > 3) {
+        showClientMessage('選択できるファイルは最大3つまでです。', true);
+        this.value = '';
+        return;
+      }
+      const invalid = files.find(file => !allowedExtensions.has(file.name.slice(file.name.lastIndexOf('.')).toLowerCase()));
+      if (invalid) {
+        showClientMessage('許可されていないファイル形式です。', true);
+        this.value = '';
+        return;
+      }
+      selectedFiles = files;
+      renderFiles();
+      showClientMessage('', false);
+    });
+
+    document.getElementById('clearReport').addEventListener('click', function () {
+      reportForm.reset();
+      selectedFiles = [];
+      renderFiles();
+      showClientMessage('', false);
+    });
+
+    const cameraDialog = document.getElementById('cameraDialog');
+    const cameraPreview = document.getElementById('cameraPreview');
+    let cameraStream = null;
+    document.getElementById('cameraAttachment').addEventListener('click', async function () {
+      if (!navigator.mediaDevices?.getUserMedia) {
+        showClientMessage('カメラを利用できないため、ファイル選択を開きます。', true);
+        attachment.click();
+        return;
+      }
+      try {
+        cameraStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: 'environment' } } });
+        cameraPreview.srcObject = cameraStream;
+        cameraDialog.showModal();
+      } catch (error) {
+        showClientMessage('カメラを利用できないため、ファイル選択を開きます。', true);
+        attachment.click();
+      }
+    });
+
+    function closeCamera() {
+      cameraStream?.getTracks().forEach(track => track.stop());
+      cameraStream = null;
+      cameraPreview.srcObject = null;
+      cameraDialog.close();
+    }
+
+    document.getElementById('closeCamera').addEventListener('click', closeCamera);
+    document.getElementById('takePhoto').addEventListener('click', function () {
+      const canvas = document.createElement('canvas');
+      canvas.width = cameraPreview.videoWidth;
+      canvas.height = cameraPreview.videoHeight;
+      canvas.getContext('2d').drawImage(cameraPreview, 0, 0);
+      canvas.toBlob(function (blob) {
+        if (!blob) return;
+        selectedFiles = [...selectedFiles, new File([blob], `camera-${Date.now()}.png`, { type: 'image/png' })].slice(0, 3);
+        renderFiles();
+        closeCamera();
+      }, 'image/png');
+    });
+
+    const phoneDialog = document.getElementById('phoneDialog');
+    document.getElementById('phoneButton').addEventListener('click', function () {
+      if (typeof phoneDialog.showModal === 'function') {
+        phoneDialog.showModal();
+      } else {
+        window.location.href = 'tel:0170000000';
+      }
+    });
+    document.getElementById('closePhone').addEventListener('click', function () {
+      phoneDialog.close();
+    });
+
+    reportForm.addEventListener('submit', function (event) {
+      const address = document.getElementById('damageAddress').value.trim();
+      if (!address) {
+        showClientMessage('発生場所の住所を入力してください。', true);
+        event.preventDefault();
+      }
+    });
+
+    const disasterType = document.getElementById('disasterType');
+    const mapStatus = document.getElementById('mapStatus');
+    function updateDisasterInfo() {
+      const label = disasterType.options[disasterType.selectedIndex].textContent;
+      mapStatus.textContent = `${label}を取得中`;
+      fetch(`/api/disaster_info/${encodeURIComponent(disasterType.value)}`)
+        .then(response => response.json())
+        .then(data => {
+          mapStatus.textContent = data.available ? `${label}: ${data.message}` : `${label}: 未提供`;
+        })
+        .catch(() => { mapStatus.textContent = `${label}: 取得失敗`; });
+    }
+    disasterType.addEventListener('change', updateDisasterInfo);
+    updateDisasterInfo();
+
     const map = L.map('shelterMap', {
         zoomControl: true,
         scrollWheelZoom: true,

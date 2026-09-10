@@ -1,0 +1,310 @@
+[
+  {
+    "comment": "いえい",
+    "original_filename": "camera-1789011303779.png",
+    "stored_filename": "abb0767bee8d4f2391906968ffbeeae2_camera-1789011303779.png",
+    "extension": ".png",
+    "content_type": "image/png",
+    "created_at": "2026-09-10T12:36:12.637927+09:00"
+  },
+  {
+    "comment": "いえい",
+    "original_filename": "camera-1789011309824.png",
+    "stored_filename": "79dd7f6de88e4a21ba735650e9e98f38_camera-1789011309824.png",
+    "extension": ".png",
+    "content_type": "image/png",
+    "created_at": "2026-09-10T12:36:12.640020+09:00"
+  },
+  {
+    "id": "demo-1",
+    "comment": "仮の災害情報 1: 周辺の安全確認が必要です。",
+    "address": "青森市古川三丁目",
+    "latitude": 40.82673967613494,
+    "longitude": 140.71302509391074,
+    "is_demo": true,
+    "created_at": ""
+  },
+  {
+    "id": "demo-2",
+    "comment": "仮の災害情報 2: 周辺の安全確認が必要です。",
+    "address": "青森市新町一丁目",
+    "latitude": 40.77645938948916,
+    "longitude": 140.77668803710398,
+    "is_demo": true,
+    "created_at": ""
+  },
+  {
+    "id": "demo-3",
+    "comment": "仮の災害情報 3: 周辺の安全確認が必要です。",
+    "address": "青森市本町二丁目",
+    "latitude": 40.81515470805859,
+    "longitude": 140.76004643878434,
+    "is_demo": true,
+    "created_at": ""
+  },
+  {
+    "id": "demo-4",
+    "comment": "仮の災害情報 4: 周辺の安全確認が必要です。",
+    "address": "青森市中央三丁目",
+    "latitude": 40.82284162239019,
+    "longitude": 140.68876737226688,
+    "is_demo": true,
+    "created_at": ""
+  },
+  {
+    "id": "demo-5",
+    "comment": "仮の災害情報 5: 周辺の安全確認が必要です。",
+    "address": "青森市浜田二丁目",
+    "latitude": 40.7781118273006,
+    "longitude": 140.69438635006327,
+    "is_demo": true,
+    "created_at": ""
+  },
+  {
+    "id": "demo-6",
+    "comment": "仮の災害情報 6: 周辺の安全確認が必要です。",
+    "address": "青森市大野",
+    "latitude": 40.8135837599931,
+    "longitude": 140.79380940780655,
+    "is_demo": true,
+    "created_at": ""
+  },
+  {
+    "id": "demo-7",
+    "comment": "仮の災害情報 7: 周辺の安全確認が必要です。",
+    "address": "青森市筒井一丁目",
+    "latitude": 40.79052248236699,
+    "longitude": 140.6888196884367,
+    "is_demo": true,
+    "created_at": ""
+  },
+  {
+    "id": "demo-8",
+    "comment": "仮の災害情報 8: 周辺の安全確認が必要です。",
+    "address": "青森市小柳四丁目",
+    "latitude": 40.816973965496516,
+    "longitude": 140.71278996197574,
+    "is_demo": true,
+    "created_at": ""
+  },
+  {
+    "id": "demo-9",
+    "comment": "仮の災害情報 9: 周辺の安全確認が必要です。",
+    "address": "青森市浅虫",
+    "latitude": 40.77489171746315,
+    "longitude": 140.71627059815287,
+    "is_demo": true,
+    "created_at": ""
+  },
+  {
+    "id": "demo-10",
+    "comment": "仮の災害情報 10: 周辺の安全確認が必要です。",
+    "address": "青森市浪打一丁目",
+    "latitude": 40.7805163443434,
+    "longitude": 140.74056280763324,
+    "is_demo": true,
+    "created_at": ""
+  },
+  {
+    "id": "demo-11",
+    "comment": "仮の災害情報 11: 周辺の安全確認が必要です。",
+    "address": "青森市古川三丁目",
+    "latitude": 40.82026382404931,
+    "longitude": 140.7759381330194,
+    "is_demo": true,
+    "created_at": ""
+  },
+  {
+    "id": "demo-12",
+    "comment": "仮の災害情報 12: 周辺の安全確認が必要です。",
+    "address": "青森市新町一丁目",
+    "latitude": 40.82935651014477,
+    "longitude": 140.7668916320494,
+    "is_demo": true,
+    "created_at": ""
+  },
+  {
+    "id": "demo-13",
+    "comment": "仮の災害情報 13: 周辺の安全確認が必要です。",
+    "address": "青森市本町二丁目",
+    "latitude": 40.804680917291044,
+    "longitude": 140.7004348666711,
+    "is_demo": true,
+    "created_at": ""
+  },
+  {
+    "id": "demo-14",
+    "comment": "仮の災害情報 14: 周辺の安全確認が必要です。",
+    "address": "青森市中央三丁目",
+    "latitude": 40.809493529603785,
+    "longitude": 140.76428842501366,
+    "is_demo": true,
+    "created_at": ""
+  },
+  {
+    "id": "demo-15",
+    "comment": "仮の災害情報 15: 周辺の安全確認が必要です。",
+    "address": "青森市浜田二丁目",
+    "latitude": 40.83344249935911,
+    "longitude": 140.67621998495775,
+    "is_demo": true,
+    "created_at": ""
+  },
+  {
+    "id": "demo-16",
+    "comment": "仮の災害情報 16: 周辺の安全確認が必要です。",
+    "address": "青森市大野",
+    "latitude": 40.7914422783248,
+    "longitude": 140.775848249138,
+    "is_demo": true,
+    "created_at": ""
+  },
+  {
+    "id": "demo-17",
+    "comment": "仮の災害情報 17: 周辺の安全確認が必要です。",
+    "address": "青森市筒井一丁目",
+    "latitude": 40.78311777994425,
+    "longitude": 140.82329870324372,
+    "is_demo": true,
+    "created_at": ""
+  },
+  {
+    "id": "demo-18",
+    "comment": "仮の災害情報 18: 周辺の安全確認が必要です。",
+    "address": "青森市小柳四丁目",
+    "latitude": 40.78023104221148,
+    "longitude": 140.74410396151035,
+    "is_demo": true,
+    "created_at": ""
+  },
+  {
+    "id": "demo-19",
+    "comment": "仮の災害情報 19: 周辺の安全確認が必要です。",
+    "address": "青森市浅虫",
+    "latitude": 40.80019028818598,
+    "longitude": 140.7251972827031,
+    "is_demo": true,
+    "created_at": ""
+  },
+  {
+    "id": "demo-20",
+    "comment": "仮の災害情報 20: 周辺の安全確認が必要です。",
+    "address": "青森市浪打一丁目",
+    "latitude": 40.83097680916462,
+    "longitude": 140.7463830104702,
+    "is_demo": true,
+    "created_at": ""
+  },
+  {
+    "id": "demo-21",
+    "comment": "仮の災害情報 21: 周辺の安全確認が必要です。",
+    "address": "青森市古川三丁目",
+    "latitude": 40.812394926419955,
+    "longitude": 140.76601431692328,
+    "is_demo": true,
+    "created_at": ""
+  },
+  {
+    "id": "demo-22",
+    "comment": "仮の災害情報 22: 周辺の安全確認が必要です。",
+    "address": "青森市新町一丁目",
+    "latitude": 40.82684624432969,
+    "longitude": 140.80696358028297,
+    "is_demo": true,
+    "created_at": ""
+  },
+  {
+    "id": "demo-23",
+    "comment": "仮の災害情報 23: 周辺の安全確認が必要です。",
+    "address": "青森市本町二丁目",
+    "latitude": 40.8216414293307,
+    "longitude": 140.77534633904077,
+    "is_demo": true,
+    "created_at": ""
+  },
+  {
+    "id": "demo-24",
+    "comment": "仮の災害情報 24: 周辺の安全確認が必要です。",
+    "address": "青森市中央三丁目",
+    "latitude": 40.76713036907486,
+    "longitude": 140.7985114542,
+    "is_demo": true,
+    "created_at": ""
+  },
+  {
+    "id": "demo-25",
+    "comment": "仮の災害情報 25: 周辺の安全確認が必要です。",
+    "address": "青森市浜田二丁目",
+    "latitude": 40.819432897290795,
+    "longitude": 140.78910868572532,
+    "is_demo": true,
+    "created_at": ""
+  },
+  {
+    "id": "demo-26",
+    "comment": "仮の災害情報 26: 周辺の安全確認が必要です。",
+    "address": "青森市大野",
+    "latitude": 40.80108092839663,
+    "longitude": 140.7612089788896,
+    "is_demo": true,
+    "created_at": ""
+  },
+  {
+    "id": "demo-27",
+    "comment": "仮の災害情報 27: 周辺の安全確認が必要です。",
+    "address": "青森市筒井一丁目",
+    "latitude": 40.781186302631944,
+    "longitude": 140.79862297987953,
+    "is_demo": true,
+    "created_at": ""
+  },
+  {
+    "id": "demo-28",
+    "comment": "仮の災害情報 28: 周辺の安全確認が必要です。",
+    "address": "青森市小柳四丁目",
+    "latitude": 40.78169441179996,
+    "longitude": 140.8089552090915,
+    "is_demo": true,
+    "created_at": ""
+  },
+  {
+    "id": "demo-29",
+    "comment": "仮の災害情報 29: 周辺の安全確認が必要です。",
+    "address": "青森市浅虫",
+    "latitude": 40.81312478760715,
+    "longitude": 140.74221229499926,
+    "is_demo": true,
+    "created_at": ""
+  },
+  {
+    "id": "demo-30",
+    "comment": "仮の災害情報 30: 周辺の安全確認が必要です。",
+    "address": "青森市浪打一丁目",
+    "latitude": 40.8249797426656,
+    "longitude": 140.8214150133247,
+    "is_demo": true,
+    "created_at": ""
+  },
+  {
+    "comment": "",
+    "address": "青森市大字原別字袖崎8",
+    "latitude": null,
+    "longitude": null,
+    "original_filename": "",
+    "stored_filename": "",
+    "extension": "",
+    "content_type": "",
+    "created_at": "2026-09-10T12:51:36.083395+09:00"
+  },
+  {
+    "comment": "やべえよ",
+    "address": "青森県青森市長島1丁目6",
+    "latitude": 40.8240417,
+    "longitude": 140.7426229,
+    "original_filename": "",
+    "stored_filename": "",
+    "extension": "",
+    "content_type": "",
+    "created_at": "2026-09-10T12:52:29.729314+09:00"
+  }
+]

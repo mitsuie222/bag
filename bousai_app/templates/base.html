@@ -6,359 +6,273 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
     :root {
-      --blue-900: #0d3e72;
-      --blue-700: #0f5b99;
-      --blue-500: #1d82d2;
-      --sky-100: #eaf7ff;
-      --white: #ffffff;
-      --soft: #edf3f7;
-      --text: #1d3557;
-      --muted: #5d7289;
-      --green: #18a770;
-      --shadow: 0 12px 28px rgba(16, 44, 76, 0.12);
+      --font-scale: 1;
+      --primary-blue: #d8d8d8;
+      --text-blue: #222;
+      --button-blue: #dceaf8;
+      --line-color: #999;
+      --page-background: #fff;
+      --page-text: #222;
+      --header-background: #d8d8d8;
     }
 
     * { box-sizing: border-box; }
 
-    html, body {
-      margin: 0;
-      padding: 0;
-      min-height: 100%;
-      font-family: "Segoe UI", "Hiragino Sans", "Yu Gothic", sans-serif;
-      background: #eef3f6;
-      color: var(--text);
-    }
-
     body {
-      display: block;
+      margin: 0;
+      color: var(--page-text);
+      background: var(--page-background);
+      font-family: "Yu Gothic", "Hiragino Kaku Gothic ProN", Meiryo, sans-serif;
+      font-size: calc(16px * var(--font-scale));
     }
 
-    a {
-      color: inherit;
-      text-decoration: none;
-    }
-
-    .topbar {
-      position: relative;
-      height: 80px;
-      padding: 0 32px;
-      background: linear-gradient(90deg, var(--blue-900), var(--blue-700));
+    .app-header {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      box-shadow: 0 4px 18px rgba(9, 39, 69, 0.18);
+      min-height: 80px;
+      padding: 8px 14px;
+      color: #222;
+      background: var(--header-background);
+      border: 2px solid #333;
     }
 
-    .brand {
+    .app-title {
+      margin: 0;
+      color: #222;
+      font-size: calc(29px * var(--font-scale));
+      font-weight: 400;
+    }
+
+    .app-title a { color: inherit; text-decoration: none; }
+
+    .menu-toggle {
+      display: none;
+      min-width: 44px;
+      min-height: 44px;
+      margin-left: 10px;
+      color: #222;
+      background: var(--button-blue);
+      border: 1px solid #8998a6;
+      font-size: 24px;
+    }
+
+    .header-tools {
       display: flex;
       align-items: center;
       gap: 12px;
-      color: var(--white);
-      font-weight: 700;
-      letter-spacing: 0.02em;
+      font-size: calc(16px * var(--font-scale));
     }
 
-    .brand-mark {
-      font-size: 2rem;
-      filter: drop-shadow(0 2px 6px rgba(0,0,0,0.2));
-    }
-
-    .brand h1 {
-      margin: 0;
-      font-size: clamp(1.7rem, 2vw, 2.2rem);
-      color: var(--white);
-      line-height: 1;
-    }
-
-    .menu-toggle {
-      width: 52px;
-      height: 52px;
-      border: 0;
-      border-radius: 14px;
+    .background-tools { display: inline-flex; align-items: center; gap: 4px; }
+    .background-button {
+      width: 30px;
+      height: 30px;
+      padding: 0;
+      border: 1px solid #56616b;
+      border-radius: 4px;
       cursor: pointer;
-      background: rgba(255,255,255,0.12);
-      color: var(--white);
-      font-size: 2rem;
-      line-height: 1;
+      font: inherit;
+      font-size: 0.75rem;
+    }
+    .background-button[data-background="black"] { color: #fff; background: #111; }
+    .background-button[data-background="white"] { color: #222; background: #fff; }
+    .background-button[data-background="blue"] { color: #fff; background: #1769aa; }
+    .background-button[data-background="yellow"] { color: #222; background: #ffe66d; }
+
+    .main-nav {
+      display: flex;
+      gap: 25px;
+      align-items: center;
+      width: min(100% - 40px, 1280px);
+      margin: 12px auto 0;
+    }
+
+    .main-nav a,
+    .tool-button {
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      transition: transform 0.2s ease, background 0.2s ease;
-      box-shadow: inset 0 0 0 1px rgba(255,255,255,0.18);
+      min-height: 37px;
+      padding: 6px 26px;
+      color: #1e2d3c;
+      background: var(--button-blue);
+      border: 1px solid #8493a1;
+      text-decoration: none;
+      white-space: nowrap;
     }
 
-    .menu-toggle:hover {
-      transform: translateY(-1px);
-      background: rgba(255,255,255,0.18);
+    .tool-button {
+      min-height: 54px;
+      padding: 6px 20px;
+      color: #222;
+      background: var(--button-blue);
+      border-color: #8998a6;
+      font-size: calc(20px * var(--font-scale));
+      cursor: pointer;
     }
 
-    .nav-panel {
-      position: absolute;
-      top: 92px;
-      right: 28px;
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-      min-width: 220px;
-      padding: 14px 12px;
-      border-radius: 16px;
-      background: rgba(255,255,255,0.96);
-      box-shadow: var(--shadow);
-      border: 1px solid rgba(13, 62, 114, 0.08);
-      opacity: 0;
-      pointer-events: none;
-      transform: translateY(-12px) scale(0.98);
-      transition: opacity 0.25s ease, transform 0.25s ease;
-      z-index: 50;
-    }
-
-    .nav-panel.is-open {
-      opacity: 1;
-      pointer-events: auto;
-      transform: translateY(0) scale(1);
-    }
-
-    .nav-panel a {
-      display: block;
-      padding: 12px 14px;
-      border-radius: 10px;
-      color: var(--blue-900);
-      font-weight: 600;
-      background: transparent;
-      transition: background 0.2s ease, transform 0.2s ease;
-      animation: slideIn 0.25s ease both;
-    }
-
-    .nav-panel a:nth-child(2) { animation-delay: 0.04s; }
-    .nav-panel a:nth-child(3) { animation-delay: 0.08s; }
-    .nav-panel a:nth-child(4) { animation-delay: 0.12s; }
-    .nav-panel a:nth-child(5) { animation-delay: 0.16s; }
-
-    .nav-panel a:hover {
-      background: rgba(29, 130, 210, 0.08);
-      transform: translateX(4px);
-    }
-
-    .login-badge {
-      display: inline-block;
-      margin-top: 4px;
-      padding: 10px 12px;
-      font-size: 0.88rem;
-      color: var(--muted);
-      border-top: 1px solid rgba(13, 62, 114, 0.08);
-    }
-
-    @keyframes slideIn {
-      from {
-        opacity: 0;
-        transform: translateY(-8px);
-      }
-      to {
-        opacity: 1;
-        transform: translateY(0);
-      }
-    }
+    .main-nav a:hover,
+    .tool-button:hover { background: #c9def2; }
 
     main {
-      max-width: 980px;
-      margin: 28px auto 80px;
-      padding: 0 18px;
+      width: min(100% - 40px, 1280px);
+      margin: 20px auto 24px;
+      animation: pageEnter 0.35s ease both;
+    }
+
+    @keyframes pageEnter {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
     }
 
     .card {
-      background: rgba(255, 255, 255, 0.38);
-      border-radius: 18px;
-      box-shadow: var(--shadow);
-      border: 1px solid rgba(13, 62, 114, 0.08);
-      padding: 22px 22px 18px;
-      margin-bottom: 28px;
+      margin-bottom: 24px;
+      padding: 20px;
+      border: 1px solid var(--line-color);
+      background: #fff;
     }
+
+    .map-card { padding: 0; overflow: hidden; }
 
     .section-head {
       display: flex;
       align-items: center;
-      gap: 12px;
-      margin-bottom: 16px;
-      font-weight: 800;
-      font-size: clamp(1.4rem, 2vw, 2rem);
-      color: var(--blue-900);
+      gap: 10px;
+      margin: 0;
+      padding: 16px 20px;
+      color: var(--text-blue);
+      font-size: calc(1.5rem * var(--font-scale));
     }
 
-    .section-icon {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      width: 34px;
-      height: 34px;
-      border-radius: 12px;
-      background: rgba(29, 130, 210, 0.12);
-      color: var(--blue-700);
-      font-size: 1.3rem;
-    }
-
-    .map-card {
-      padding: 0;
-      overflow: hidden;
-      background: rgba(255,255,255,0.82);
-    }
+    .section-icon { display: inline-flex; align-items: center; justify-content: center; }
 
     .map-box {
-      height: 430px;
       width: 100%;
-      border-radius: 18px;
+      height: 430px;
       overflow: hidden;
       background: #dfeef7;
     }
 
-    #shelterMap {
-      width: 100%;
-      height: 100%;
-      min-height: 430px;
-      filter: saturate(0.95) contrast(1.02);
-    }
+    #shelterMap { width: 100%; height: 100%; min-height: 430px; }
 
-    .weather-card {
-      display: flex;
-      flex-direction: column;
-      gap: 14px;
-      background: rgba(255,255,255,0.84);
-    }
+    .weather-card { background: #fff; }
+    .weather-header { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+    .weather-title { display: flex; align-items: center; gap: 10px; font-size: calc(1.35rem * var(--font-scale)); }
+    .weather-content { padding-top: 12px; }
+    .weather-item { display: flex; align-items: center; gap: 10px; margin: 10px 0; }
+    .status-dot { display: inline-block; width: 12px; height: 12px; border-radius: 50%; background: #18a770; }
+    .weather-meta { color: #596979; line-height: 1.7; }
 
-    .weather-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 16px;
-      padding-bottom: 12px;
-      border-bottom: 1px solid rgba(13, 62, 114, 0.08);
-    }
-
-    .weather-title {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      font-size: clamp(1.2rem, 1.8vw, 1.8rem);
-      font-weight: 800;
-      color: var(--blue-900);
-    }
-
-    .auto-update {
-      display: inline-flex;
-      align-items: center;
-      gap: 9px;
-      padding: 10px 14px;
-      border-radius: 999px;
-      background: rgba(24, 167, 112, 0.08);
-      color: var(--green);
-      font-weight: 700;
-      font-size: 0.95rem;
-      white-space: nowrap;
-    }
-
-    .weather-content {
-      padding: 6px 4px 0;
-      color: var(--text);
-    }
-
-    .weather-item {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      margin: 10px 0;
-      font-size: 1.05rem;
-      color: var(--text);
-    }
-
-    .status-dot {
-      display: inline-block;
-      width: 14px;
-      height: 14px;
-      border-radius: 50%;
-      background: var(--green);
-      box-shadow: 0 0 0 4px rgba(24, 167, 112, 0.14);
-    }
-
-    .weather-meta {
-      margin-top: 10px;
-      color: var(--muted);
-      font-size: 0.96rem;
-      line-height: 1.8;
-    }
-
-    @media (max-width: 640px) {
-      .topbar {
-        padding: 0 18px;
+    @media (max-width: 600px) {
+      .app-header { display: block; padding: 12px 16px; }
+      .app-title { font-size: calc(22px * var(--font-scale)); }
+      .menu-toggle { display: inline-block; vertical-align: middle; }
+      .header-tools { display: block; margin-top: 10px; }
+      .main-nav {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 8px;
+        margin-top: 8px;
       }
-
-      .nav-panel {
-        right: 18px;
-        left: 18px;
-        min-width: auto;
-      }
-
-      .map-box {
-        height: 340px;
-      }
-
-      .weather-header {
-        flex-direction: column;
-        align-items: flex-start;
-      }
+      .header-tools { font-size: calc(14px * var(--font-scale)); }
+      main { width: min(100% - 20px, 1280px); margin-top: 10px; }
+      .main-nav.is-collapsed { display: none; }
+      .map-box { height: 340px; }
+      #shelterMap { min-height: 340px; }
+      .weather-header { display: block; }
     }
   </style>
 </head>
 <body>
-  <header class="topbar">
-    <div class="brand" aria-label="防災アプリ">
-      <span class="brand-mark" aria-hidden="true">🛟</span>
-      <h1>防災アプリ</h1>
+  <header class="app-header">
+    <div>
+      <h1 class="app-title"><a href="/">防災アプリ</a></h1>
+      <button id="menu-toggle" class="menu-toggle" type="button" aria-label="メニューを開閉" aria-expanded="true">&#9776;</button>
     </div>
-
-    <button class="menu-toggle" type="button" aria-label="メニューを開く" aria-expanded="false">☰</button>
-
-    <nav class="nav-panel" id="navPanel" aria-label="メインメニュー">
-      <a href="/">ホーム</a>
-      <a href="/shelter_search">避難所検索</a>
-      <a href="/shelter_register">避難所登録</a>
-      <a href="/board">指示・発信ボード</a>
+    <div class="header-tools">
+      <span>文字サイズ変更</span>
+      <button id="font-size-standard" class="tool-button" type="button" aria-pressed="true">標準</button>
+      <button id="font-size-large" class="tool-button" type="button" aria-pressed="false">拡大</button>
+      <span>背景色</span>
+      <div class="background-tools" aria-label="背景色変更">
+        <button class="background-button" type="button" data-background="black" aria-label="背景を黒にする">黒</button>
+        <button class="background-button" type="button" data-background="white" aria-label="背景を白にする">白</button>
+        <button class="background-button" type="button" data-background="blue" aria-label="背景を青にする">青</button>
+        <button class="background-button" type="button" data-background="yellow" aria-label="背景を黄色にする">黄</button>
+      </div>
       {% if session.logged_in %}
-        <div class="login-badge">
-          ログイン中{% if session.username %}（{{ session.username }}）{% endif %}
-          <a href="/logout">ログアウト</a>
-        </div>
+        <a class="tool-button" href="/logout">ログアウト</a>
+        <span>ログイン中</span>
       {% else %}
-        <div class="login-badge">
-          未ログイン
-          <a href="/login">ログイン</a>
-        </div>
+        <a class="tool-button" href="{{ url_for('login', next=request.full_path) }}">ログイン</a>
+        <span>未ログイン</span>
       {% endif %}
-    </nav>
+    </div>
   </header>
 
-  <main>
-    {% block content %}{% endblock %}
-  </main>
+  <nav id="main-nav" class="main-nav">
+    {% if request.endpoint != 'index' %}<a href="/">ホームへ</a>{% endif %}
+    <a href="/shelter_search">避難所検索へ</a>
+    {% if session.logged_in %}
+      <a href="/shelter_add">新規避難所追加</a>
+      <a href="/shelter_register">避難所登録</a>
+      <a href="/board">指示・発信ボード</a>
+    {% endif %}
+  </nav>
+
+  <main>{% block content %}{% endblock %}</main>
 
   <script>
-    document.addEventListener('DOMContentLoaded', function () {
-      const toggle = document.querySelector('.menu-toggle');
-      const nav = document.getElementById('navPanel');
-      if (toggle && nav) {
-        toggle.addEventListener('click', function () {
-          const isOpen = nav.classList.toggle('is-open');
-          toggle.setAttribute('aria-expanded', String(isOpen));
-          toggle.textContent = isOpen ? '✕' : '☰';
-        });
+    (function() {
+      const standardButton = document.getElementById('font-size-standard');
+      const largeButton = document.getElementById('font-size-large');
+      const savedSize = localStorage.getItem('fontSize') === 'large' ? 'large' : 'standard';
 
-        nav.querySelectorAll('a').forEach(function (link) {
-          link.addEventListener('click', function () {
-            nav.classList.remove('is-open');
-            toggle.setAttribute('aria-expanded', 'false');
-            toggle.textContent = '☰';
-          });
-        });
+      function applyFontSize(size) {
+        const isLarge = size === 'large';
+        document.documentElement.style.setProperty('--font-scale', isLarge ? '1.2' : '1');
+        standardButton.setAttribute('aria-pressed', String(!isLarge));
+        largeButton.setAttribute('aria-pressed', String(isLarge));
+        localStorage.setItem('fontSize', size);
       }
-    });
+
+      standardButton.addEventListener('click', function() { applyFontSize('standard'); });
+      largeButton.addEventListener('click', function() { applyFontSize('large'); });
+      applyFontSize(savedSize);
+    })();
+
+    (function() {
+      const backgrounds = {
+        black: { page: '#111', text: '#f5f5f5', header: '#222' },
+        white: { page: '#fff', text: '#222', header: '#d8d8d8' },
+        blue: { page: '#dceeff', text: '#14324a', header: '#8fc3e8' },
+        yellow: { page: '#fff8cf', text: '#3b3211', header: '#f0d66a' }
+      };
+      const savedBackground = localStorage.getItem('backgroundColor') || 'white';
+      function applyBackground(name) {
+        const colors = backgrounds[name] || backgrounds.white;
+        const root = document.documentElement;
+        root.style.setProperty('--page-background', colors.page);
+        root.style.setProperty('--page-text', colors.text);
+        root.style.setProperty('--header-background', colors.header);
+        localStorage.setItem('backgroundColor', name);
+      }
+      document.querySelectorAll('.background-button').forEach(function(button) {
+        button.addEventListener('click', function() { applyBackground(this.dataset.background); });
+      });
+      applyBackground(savedBackground);
+    })();
+
+    (function() {
+      const toggle = document.getElementById('menu-toggle');
+      const nav = document.getElementById('main-nav');
+      if (!toggle || !nav) return;
+      toggle.addEventListener('click', function() {
+        const collapsed = nav.classList.toggle('is-collapsed');
+        toggle.setAttribute('aria-expanded', String(!collapsed));
+      });
+    })();
   </script>
 </body>
 </html>

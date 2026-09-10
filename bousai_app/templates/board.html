@@ -1,25 +1,166 @@
 {% extends "base.html" %}
 
-{% block title %}指示・発信ボード - 防災アプリ{% endblock %}
+{% block title %}発信ボード - 防災アプリ{% endblock %}
 
 {% block content %}
-<h2>発信ボード</h2>
-<p>住民向けの発信を登録・確認できます。</p>
+<style>
+  .board-grid { display: grid; grid-template-columns: minmax(280px, 0.9fr) minmax(320px, 1.1fr); gap: 24px; }
+  .board-panel { padding: 20px; background: #fff; border: 1px solid #bbb; }
+  .board-panel h2 { margin-top: 0; }
+  .board-form { display: grid; gap: 12px; }
+  .board-form label { font-weight: 700; }
+  .board-form input[type="text"], .board-form textarea { width: 100%; padding: 10px; border: 1px solid #999; border-radius: 6px; font: inherit; }
+  .board-form textarea { min-height: 130px; resize: vertical; }
+  .target-options { display: flex; flex-wrap: wrap; gap: 12px; }
+  .target-options label { font-weight: 400; }
+  .district-map-wrap { padding: 12px; background: #fff; border: 1px solid #bbb; }
+  .district-map { display: block; width: 100%; max-height: 430px; }
+  .district-shape { cursor: pointer; stroke: #555; stroke-width: 1.5; transition: fill 0.15s, stroke-width 0.15s; }
+  .district-shape:hover, .district-shape:focus { stroke: #222; stroke-width: 3; outline: none; }
+  .district-shape.is-selected { fill: #ef6464 !important; stroke: #9e1f1f; stroke-width: 4; }
+  .district-label { font-size: 14px; font-weight: 700; pointer-events: none; text-anchor: middle; }
+  .district-status { min-height: 1.5em; margin: 10px 0; }
+  .board-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+  .board-button { padding: 10px 18px; border: 1px solid #8998a6; border-radius: 6px; background: #dceaf8; cursor: pointer; font: inherit; }
+  .board-button.primary { background: #8dbce0; }
+  .board-message { padding: 10px; color: #a40000; background: #fff0f0; border: 1px solid #d66; }
+  .history-wrap { overflow-x: auto; }
+  .history-table { width: 100%; min-width: 760px; border-collapse: collapse; }
+  .history-table th, .history-table td { padding: 9px; border: 1px solid #aaa; text-align: left; vertical-align: top; overflow-wrap: anywhere; }
+  .history-table th { background: #eef5fb; }
+  .history-table .delete-button { padding: 6px 10px; border: 1px solid #b55; border-radius: 4px; background: #fff0f0; cursor: pointer; }
+  @media (max-width: 700px) {
+    .board-grid { grid-template-columns: 1fr; gap: 14px; }
+    .board-button.primary { width: 100%; }
+  }
+</style>
 
-<!-- 発信一覧 -->
-<h3>発信一覧</h3>
-{% if instructions %}
-<table border="1" cellpadding="5">
-  <tr>
-    <th>内容</th>
-  </tr>
-  {% for inst in instructions %}
-  <tr>
-    <td>{{ inst.content }}{% if inst.shelter %}（避難先: {{ inst.shelter }}）{% endif %}</td>
-  </tr>
-  {% endfor %}
-</table>
-{% else %}
-<p>登録されている指示はありません。</p>
-{% endif %}
+<section class="board-panel">
+  <h2>発信ボード</h2>
+  <p>指示・発信を登録・確認できます。</p>
+  {% if error %}<div class="board-message" role="alert">{{ message }}</div>{% endif %}
+  <div class="board-grid">
+    <div>
+      <h3>発信地区を選択</h3>
+      <div class="district-map-wrap">
+        <svg class="district-map" viewBox="0 0 420 430" role="img" aria-label="青森市の地区選択白地図">
+          <g id="districtShapes">
+            <polygon class="district-shape" data-district="北部" tabindex="0" fill="#f47b83" points="74,22 119,10 159,26 184,21 206,40 218,77 208,111 207,144 182,162 145,153 117,137 78,139 50,117 38,85 55,73" />
+            <polygon class="district-shape" data-district="西部" tabindex="0" fill="#b18dcc" points="50,117 78,139 117,137 145,153 169,177 174,215 155,254 125,274 92,263 68,277 38,256 27,219 28,177 38,141" />
+            <polygon class="district-shape" data-district="浪岡" tabindex="0" fill="#e89add" points="27,219 38,256 68,277 92,263 125,274 158,299 182,337 199,370 161,377 126,374 96,354 64,354 42,326 17,310 27,274 13,244" />
+            <polygon class="district-shape" data-district="中央（1）" tabindex="0" fill="#72cdb1" points="145,153 182,162 207,144 229,153 244,177 228,204 202,217 174,215 169,177" />
+            <polygon class="district-shape" data-district="中央（2）" tabindex="0" fill="#c4df8f" points="174,215 202,217 228,204 254,228 263,264 247,301 216,316 182,337 158,299 125,274 155,254" />
+            <polygon class="district-shape" data-district="東部" tabindex="0" fill="#65c5e3" points="244,74 282,82 325,107 356,143 391,168 384,216 400,245 386,283 356,289 326,270 294,281 263,264 254,228 228,204 244,177 229,153" />
+            <polygon class="district-shape" data-district="南部" tabindex="0" fill="#b8dc8a" points="247,301 263,264 294,281 326,270 356,289 397,324 371,364 331,379 298,369 268,393 228,379 199,399 182,337 216,316" />
+          </g>
+          <g aria-hidden="true">
+            <text class="district-label" x="122" y="83">北部</text>
+            <text class="district-label" x="101" y="207">西部</text>
+            <text class="district-label" x="91" y="315">浪岡</text>
+            <text class="district-label" x="198" y="174">中央（1）</text>
+            <text class="district-label" x="199" y="263">中央（2）</text>
+            <text class="district-label" x="319" y="177">東部</text>
+            <text class="district-label" x="287" y="335">南部</text>
+          </g>
+        </svg>
+      </div>
+      <p id="districtStatus" class="district-status" aria-live="polite">地区は未選択です</p>
+      <div class="board-actions">
+        <button id="selectAllDistricts" class="board-button" type="button">全選択</button>
+        <button id="clearDistricts" class="board-button" type="button">クリア</button>
+      </div>
+    </div>
+
+    <form class="board-form" method="post" action="{{ url_for('board') }}">
+      <input id="districtInput" name="district" type="hidden" value="{{ form_data.get('district', '') }}">
+      <label for="subject">件名</label>
+      <input id="subject" name="subject" type="text" required value="{{ form_data.get('subject', '') }}">
+      <label for="content">連絡内容</label>
+      <textarea id="content" name="content" required>{{ form_data.get('content', '') }}</textarea>
+      <label for="attachment">添付ファイル情報（任意）</label>
+      <input id="attachment" name="attachment" type="text" value="{{ form_data.get('attachment', '') }}">
+      <fieldset>
+        <legend>連絡対象</legend>
+        <div class="target-options">
+          {% for value, label in [('全員', '全員に連絡'), ('住民', '市民のみ'), ('職員', '職員のみ')] %}
+          <label><input type="radio" name="target" value="{{ value }}" {% if form_data.get('target') == value %}checked{% endif %} required> {{ label }}</label>
+          {% endfor %}
+        </div>
+      </fieldset>
+      <button class="board-button primary" type="submit">送信</button>
+    </form>
+  </div>
+</section>
+
+<section class="board-panel">
+  <h3>{% if show_history %}送信履歴一覧{% else %}送信履歴{% endif %}</h3>
+  {% if instructions|length >= 5 and not show_history %}<p>送信履歴が5件以上あります。</p>{% endif %}
+  {% if instructions %}
+  <div class="history-wrap">
+    <table class="history-table">
+      <thead><tr><th>対象</th><th>地区</th><th>件名</th><th>内容</th><th>添付ファイル</th><th>送信日時</th><th>操作</th></tr></thead>
+      <tbody>
+      {% for inst in instructions %}
+        <tr>
+          <td>{{ inst.target or '未指定' }}</td>
+          <td>{{ inst.district or '全地区' }}</td>
+          <td>{{ inst.subject or '未設定' }}</td>
+          <td>{{ inst.content }}</td>
+          <td>{{ inst.attachment or '' }}</td>
+          <td>{{ inst.created_at|instruction_time }}</td>
+          <td>
+            <form method="post" action="{{ url_for('delete_board_history', instruction_id=inst.id) }}" onsubmit="return confirm('この履歴を削除しますか？');">
+              <button class="delete-button" type="submit">削除</button>
+            </form>
+          </td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}<p>現在、送信履歴はありません。</p>{% endif %}
+  {% if not show_history and instructions|length >= 5 %}<p><a class="board-button" href="{{ url_for('board_history') }}">一覧を見る</a></p>{% endif %}
+  {% if show_history %}<p><a class="board-button" href="{{ url_for('board') }}">ボードへ戻る</a></p>{% endif %}
+</section>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  const shapes = Array.from(document.querySelectorAll('.district-shape'));
+  const input = document.getElementById('districtInput');
+  const status = document.getElementById('districtStatus');
+  const selected = new Set((input.value || '').split('、').map(value => value.trim()).filter(Boolean));
+
+  function renderDistricts() {
+    shapes.forEach(shape => shape.classList.toggle('is-selected', selected.has(shape.dataset.district)));
+    input.value = Array.from(selected).join('、');
+    status.textContent = selected.size ? `選択中: ${Array.from(selected).join('、')}` : '地区は未選択です';
+  }
+
+  function toggleDistrict(shape) {
+    const district = shape.dataset.district;
+    selected.has(district) ? selected.delete(district) : selected.add(district);
+    renderDistricts();
+  }
+
+  shapes.forEach(shape => {
+    shape.addEventListener('click', () => toggleDistrict(shape));
+    shape.addEventListener('keydown', event => {
+      if (event.key === 'Enter' || event.key === ' ') {
+        event.preventDefault();
+        toggleDistrict(shape);
+      }
+    });
+  });
+
+  document.getElementById('selectAllDistricts').addEventListener('click', function () {
+    shapes.forEach(shape => selected.add(shape.dataset.district));
+    renderDistricts();
+  });
+  document.getElementById('clearDistricts').addEventListener('click', function () {
+    selected.clear();
+    renderDistricts();
+  });
+  renderDistricts();
+});
+</script>
 {% endblock %}

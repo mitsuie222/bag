@@ -1,5 +1,26 @@
 [
   {
+    "id": 56,
+    "name": "やばい避難所",
+    "address": "ああ",
+    "description": "",
+    "amenities": [
+      "pet",
+      "toilet",
+      "wheelchair"
+    ],
+    "latitude": 40.8263707,
+    "longitude": 140.7504969,
+    "lat": 40.8263707,
+    "lng": 140.7504969,
+    "image_url": "/static/uploads/56_shelter_3581c288_2.png",
+    "source": "custom",
+    "crowd_status": "未入力",
+    "wheelchair_accessible": true,
+    "multipurpose_toilet": true,
+    "pets_allowed": true
+  },
+  {
     "id": 1,
     "name": "北部小学校",
     "district": "北部",
@@ -57,9 +78,10 @@
   {
     "id": 6,
     "name": "古川小学校",
+    "address": "青森市古川三丁目7-14",
     "district": "北部",
-    "lat": 40.843,
-    "lng": 140.74,
+    "lat": 40.8219023,
+    "lng": 140.7347989,
     "capacity": 162,
     "tsunami": "対応",
     "landslide": "要確認",
@@ -68,9 +90,10 @@
   {
     "id": 7,
     "name": "野内小学校",
+    "address": "青森市大字野内字菊川155",
     "district": "北部",
-    "lat": 40.851,
-    "lng": 140.75,
+    "lat": 40.8492288,
+    "lng": 140.819588,
     "capacity": 169,
     "tsunami": "要確認",
     "landslide": "対応",
@@ -143,15 +166,22 @@
     "description": "西部に所在する避難施設です。"
   },
   {
-    "id": 14,
+    "id": "56",
     "name": "原別小学校",
-    "district": "西部",
-    "lat": 40.818,
-    "lng": 140.68,
+    "district": "東部",
+    "region_code": "toubu",
+    "area": "原別(大字)",
+    "address": "青森市大字原別字袖崎8",
     "capacity": 218,
-    "tsunami": "対応",
-    "landslide": "対応",
-    "description": "西部に所在する避難施設です。"
+    "tsunami": "O",
+    "landslide": "O",
+    "description": "避難所一覧CSVに掲載されています。",
+    "lat": 40.8341384,
+    "lng": 140.8112766,
+    "crowd_status": "やや混雑",
+    "wheelchair_accessible": true,
+    "multipurpose_toilet": true,
+    "pets_allowed": true
   },
   {
     "id": 15,
@@ -603,5 +633,26 @@
     "tsunami": "要確認",
     "landslide": "対応",
     "description": "浪岡地区に所在する避難施設です。"
+  },
+  {
+    "id": "8",
+    "name": "郷山前農村センター",
+    "district": "浪岡地区",
+    "region_code": "namioka",
+    "area": "郷山前",
+    "address": "青森市浪岡大字郷山前字上野62-5",
+    "capacity": null,
+    "tsunami": "X",
+    "landslide": "未登録",
+    "description": "避難所一覧CSVに掲載されています。",
+    "crowd_status": "やや空いている",
+    "csv_multipurpose_toilet": false,
+    "csv_pets_allowed": false,
+    "csv_wheelchair_accessible": true,
+    "lat": null,
+    "lng": null,
+    "wheelchair_accessible": true,
+    "multipurpose_toilet": true,
+    "pets_allowed": true
   }
 ]

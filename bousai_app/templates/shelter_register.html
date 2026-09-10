@@ -1,23 +1,180 @@
 {% extends "base.html" %}
 
+{% block title %}避難所登録 - 防災アプリ{% endblock %}
+
 {% block content %}
-<h2>避難所登録</h2>
-<p>新しい避難所情報を登録します。</p>
+<style>
+  .register-grid { display: grid; grid-template-columns: minmax(280px, .8fr) minmax(320px, 1.2fr); gap: 24px; }
+  .register-panel { padding: 20px; background: #fff; border: 1px solid #bbb; }
+  .register-panel h2, .register-panel h3 { margin-top: 0; }
+  .register-form { display: grid; gap: 12px; }
+  .register-form label { font-weight: 700; }
+  .register-form select, .register-form input[type="text"] { width: 100%; padding: 10px; border: 1px solid #999; border-radius: 6px; font: inherit; }
+  .shelter-preview { min-height: 110px; padding: 12px; border: 1px dashed #999; background: #fafafa; }
+  .crowd-options { display: flex; flex-wrap: wrap; gap: 8px; }
+  .crowd-option { padding: 8px 12px; border: 2px solid transparent; border-radius: 6px; cursor: pointer; transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease; }
+  .crowd-option:hover { transform: translateY(-2px); }
+  .crowd-option[data-status="空いている"] { background: #c9efcf; }
+  .crowd-option[data-status="やや空いている"] { background: #e4f1b8; }
+  .crowd-option[data-status="やや混雑"] { background: #fff0a8; }
+  .crowd-option[data-status="混雑"] { background: #ffc27d; }
+  .crowd-option[data-status="満員"] { background: #ff9b9b; }
+  .crowd-option.is-selected { border-color: #222; box-shadow: 0 0 0 2px #fff inset; }
+  .facility-options { display: grid; gap: 8px; }
+  .facility-option { display: block; padding: 9px; border: 1px solid #bbb; border-radius: 6px; cursor: pointer; transition: transform .18s ease, background .18s ease; }
+  .facility-option:hover { transform: translateX(4px); background: #f1f8ff; }
+  .register-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+  .register-button { padding: 10px 16px; border: 1px solid #8998a6; border-radius: 6px; background: #dceaf8; cursor: pointer; font: inherit; transition: transform .18s ease, box-shadow .18s ease, background .18s ease; }
+  .register-button:hover { transform: translateY(-2px); box-shadow: 0 4px 10px rgba(20, 55, 85, .16); }
+  .register-button.update { background: #d5f0da; border-color: #70a878; }
+  .register-button.delete { background: #ffe1e1; border-color: #b55; }
+  .message { padding: 10px; margin-bottom: 14px; }
+  .message.success { color: #126b39; background: #effaf2; border: 1px solid #65a878; }
+  .message.error { color: #a40000; background: #fff0f0; border: 1px solid #d66; }
+  #hazardMap { height: 360px; margin-top: 12px; border: 1px solid #999; }
+  .hazard-form { display: grid; gap: 8px; margin-top: 14px; }
+  .hazard-form input { padding: 9px; border: 1px solid #999; border-radius: 6px; font: inherit; }
+  .hazard-button { background: #ffe1e1; border-color: #b55; }
+  .selected-location-pin {
+    animation: selectedPinPulse 1.1s ease-in-out infinite;
+    transform-origin: center;
+  }
+  @keyframes selectedPinPulse {
+    0%, 100% { stroke-width: 4; opacity: 1; }
+    50% { stroke-width: 8; opacity: 0.72; }
+  }
+  @media (max-width: 700px) {
+    .register-grid { grid-template-columns: 1fr; gap: 14px; }
+    .register-actions .register-button { flex: 1 1 100%; }
+  }
+</style>
 
-<!-- 成功・エラーメッセージ表示 -->
-{% if success %}
-  <p>{{ message }}</p>
-{% endif %}
+{% if message %}<div class="message {{ 'error' if error else 'success' }}" role="status">{{ message }}</div>{% endif %}
 
-{% if error %}
-  <p>{{ message }}</p>
-{% endif %}
+<section class="register-panel">
+  <h2>避難所登録</h2>
+  <p>登録済み避難所の混雑状況と対応状況を更新できます。</p>
+  <div class="register-grid">
+    <div>
+      <h3>危険箇所を地図登録</h3>
+      <div id="hazardMap"></div>
+      <p id="hazardCoordinates" aria-live="polite">地図をクリックして位置を選択してください。</p>
+      <form class="hazard-form" method="post" action="{{ url_for('shelter_register') }}">
+        <input type="hidden" name="action" value="add_hazard">
+        <input id="hazardLatitude" name="latitude" type="hidden">
+        <input id="hazardLongitude" name="longitude" type="hidden">
+        <label for="hazardName">危険箇所名</label>
+        <input id="hazardName" name="hazard_name" type="text" required>
+        <button class="register-button hazard-button" type="submit">危険箇所を登録</button>
+      </form>
+    </div>
 
-<form method="POST">
-  <p>
-    <label for="name">避難所名（必須）</label><br>
-    <input type="text" id="name" name="name">
-  </p>
-  <p><button type="submit">登録</button></p>
-</form>
+    <form class="register-form" method="post" action="{{ url_for('shelter_register') }}">
+      <input type="hidden" name="action" value="register">
+      <label for="shelterId">避難所名</label>
+      <select id="shelterId" name="shelter_id" required>
+        <option value="">避難所を選択してください</option>
+        {% for shelter in shelters %}
+          {% set registered = registered_shelters|selectattr('name', 'equalto', shelter.name)|list|first %}
+          <option value="{{ shelter.id }}" data-address="{{ shelter.address or '' }}" {% if registered %}data-registered="true"{% endif %}>
+            {{ shelter.name }}{% if registered %}（登録済み）{% endif %}
+          </option>
+        {% endfor %}
+      </select>
+      <label for="shelterAddress">住所</label>
+      <input id="shelterAddress" name="address" type="text" readonly required>
+      <div id="shelterPreview" class="shelter-preview">避難所を選択すると登録状態を表示します。</div>
+
+      <label>混雑状況</label>
+      <div class="crowd-options">
+        {% for status in crowd_statuses %}
+          <label class="crowd-option" data-status="{{ status }}"><input type="radio" name="crowd_status" value="{{ status }}" required> {{ status }}</label>
+        {% endfor %}
+      </div>
+
+      <fieldset class="facility-options">
+        <legend>対応状況</legend>
+        <label class="facility-option"><input id="wheelchairAccessible" type="checkbox" name="wheelchair_accessible"> ♿ 車椅子対応</label>
+        <label class="facility-option"><input id="multipurposeToilet" type="checkbox" name="multipurpose_toilet"> 🚻 多目的トイレ</label>
+        <label class="facility-option"><input id="petsAllowed" type="checkbox" name="pets_allowed"> 🐾 ペット同伴可</label>
+      </fieldset>
+
+      <div class="register-actions">
+        <button class="register-button update" type="submit">避難所を登録・更新</button>
+        <button class="register-button delete" type="submit" name="action" value="delete" formnovalidate onclick="return confirm('この避難所の登録を削除しますか？');">避難所を削除</button>
+      </div>
+    </form>
+  </div>
+</section>
+
+<p><a class="register-button" href="{{ url_for('registered_shelters_list') }}">登録済み避難所一覧を見る</a></p>
+
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  const candidates = {{ shelters|tojson }};
+  const registered = {{ registered_shelters|tojson }};
+  const shelterId = document.getElementById('shelterId');
+  const address = document.getElementById('shelterAddress');
+  const preview = document.getElementById('shelterPreview');
+  const crowdOptions = document.querySelectorAll('.crowd-option');
+  const facilityFields = {
+    wheelchair_accessible: document.getElementById('wheelchairAccessible'),
+    multipurpose_toilet: document.getElementById('multipurposeToilet'),
+    pets_allowed: document.getElementById('petsAllowed')
+  };
+
+  function updateSelectedShelter() {
+    const selected = candidates.find(item => String(item.id) === shelterId.value);
+    const saved = selected && registered.find(item => item.name === selected.name);
+    address.value = selected ? (selected.address || '') : '';
+    preview.textContent = saved ? '登録済み: 混雑状況と対応状況を読み込みました。' : '未登録の避難所です。';
+    document.querySelectorAll('input[name="crowd_status"]').forEach(input => {
+      input.checked = Boolean(saved && saved.crowd_status === input.value);
+    });
+    Object.entries(facilityFields).forEach(([key, field]) => {
+      field.checked = Boolean(saved && saved[key]);
+    });
+    crowdOptions.forEach(option => {
+      const radio = option.querySelector('input');
+      option.classList.toggle('is-selected', radio.checked);
+    });
+  }
+
+  function updateCrowdHighlight() {
+    crowdOptions.forEach(option => {
+      const radio = option.querySelector('input');
+      option.classList.toggle('is-selected', radio.checked);
+    });
+  }
+
+  shelterId.addEventListener('change', updateSelectedShelter);
+  document.querySelectorAll('input[name="crowd_status"]').forEach(input => {
+    input.addEventListener('change', updateCrowdHighlight);
+  });
+  updateSelectedShelter();
+
+  const map = L.map('hazardMap').setView([40.8246, 140.7400], 12);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '&copy; OpenStreetMap contributors' }).addTo(map);
+  const hazardLayer = L.layerGroup().addTo(map);
+  let selectedLocationMarker = null;
+  const hazards = {{ hazards|tojson }};
+  hazards.forEach(hazard => L.circleMarker([hazard.latitude, hazard.longitude], { color: '#c62828', fillColor: '#ef5350', fillOpacity: 0.9 }).bindPopup(hazard.name).addTo(hazardLayer));
+  map.on('click', function (event) {
+    if (selectedLocationMarker) hazardLayer.removeLayer(selectedLocationMarker);
+    selectedLocationMarker = L.circleMarker([event.latlng.lat, event.latlng.lng], {
+      radius: 16,
+      color: '#b77900',
+      weight: 4,
+      fillColor: '#ffd43b',
+      fillOpacity: 0.95,
+      className: 'selected-location-pin'
+    }).bindPopup('指定した危険箇所の位置').addTo(hazardLayer).openPopup();
+    document.getElementById('hazardLatitude').value = event.latlng.lat.toFixed(6);
+    document.getElementById('hazardLongitude').value = event.latlng.lng.toFixed(6);
+    document.getElementById('hazardCoordinates').textContent = `選択位置: ${event.latlng.lat.toFixed(6)}, ${event.latlng.lng.toFixed(6)}`;
+  });
+});
+</script>
 {% endblock %}
