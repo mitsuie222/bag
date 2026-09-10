@@ -66,12 +66,12 @@
       </div>
       <p id="districtStatus" class="district-status" aria-live="polite">地区は未選択です</p>
       <div class="board-actions">
-        <button id="selectAllDistricts" class="board-button" type="button">全選択</button>
-        <button id="clearDistricts" class="board-button" type="button">クリア</button>
+        <button id="selectAllDistricts" class="board-button" type="button">☑️ 全選択</button>
+        <button id="clearDistricts" class="board-button" type="button">🧹 クリア</button>
       </div>
     </div>
 
-    <form class="board-form" method="post" action="{{ url_for('board') }}">
+    <form class="board-form" method="post" action="{{ url_for('board') }}" onsubmit="return confirm('本当によろしいですか？');">
       <input id="districtInput" name="district" type="hidden" value="{{ form_data.get('district', '') }}">
       <label for="subject">件名</label>
       <input id="subject" name="subject" type="text" required value="{{ form_data.get('subject', '') }}">
@@ -87,7 +87,7 @@
           {% endfor %}
         </div>
       </fieldset>
-      <button class="board-button primary" type="submit">送信</button>
+      <button class="board-button primary" type="submit">📣 送信</button>
     </form>
   </div>
 </section>
@@ -110,7 +110,7 @@
           <td>{{ inst.created_at|instruction_time }}</td>
           <td>
             <form method="post" action="{{ url_for('delete_board_history', instruction_id=inst.id) }}" onsubmit="return confirm('この履歴を削除しますか？');">
-              <button class="delete-button" type="submit">削除</button>
+              <button class="delete-button" type="submit">🗑️ 削除</button>
             </form>
           </td>
         </tr>
@@ -119,8 +119,8 @@
     </table>
   </div>
   {% else %}<p>現在、送信履歴はありません。</p>{% endif %}
-  {% if not show_history and instructions|length >= 5 %}<p><a class="board-button" href="{{ url_for('board_history') }}">一覧を見る</a></p>{% endif %}
-  {% if show_history %}<p><a class="board-button" href="{{ url_for('board') }}">ボードへ戻る</a></p>{% endif %}
+  {% if not show_history and instructions|length >= 5 %}<p><a class="board-button" href="{{ url_for('board_history') }}">📜 一覧を見る</a></p>{% endif %}
+  {% if show_history %}<p><a class="board-button" href="{{ url_for('board') }}">↩️ ボードへ戻る</a></p>{% endif %}
 </section>
 
 <script>

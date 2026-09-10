@@ -35,6 +35,9 @@
   .hazard-form { display: grid; gap: 8px; margin-top: 14px; }
   .hazard-form input { padding: 9px; border: 1px solid #999; border-radius: 6px; font: inherit; }
   .hazard-button { background: #ffe1e1; border-color: #b55; }
+  .shelter-tabs { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; }
+  .shelter-tab { padding: 7px 10px; border: 1px solid #8998a6; border-radius: 5px; background: #eef5fb; cursor: pointer; font: inherit; }
+  .shelter-tab.is-selected { color: #fff; background: #1769aa; border-color: #1769aa; }
   .selected-location-pin {
     animation: selectedPinPulse 1.1s ease-in-out infinite;
     transform-origin: center;
@@ -65,22 +68,15 @@
         <input id="hazardLongitude" name="longitude" type="hidden">
         <label for="hazardName">危険箇所名</label>
         <input id="hazardName" name="hazard_name" type="text" required>
-        <button class="register-button hazard-button" type="submit">危険箇所を登録</button>
+        <button class="register-button hazard-button" type="submit">⚠️ 危険箇所を登録</button>
       </form>
     </div>
 
     <form class="register-form" method="post" action="{{ url_for('shelter_register') }}">
       <input type="hidden" name="action" value="register">
       <label for="shelterId">避難所名</label>
-      <select id="shelterId" name="shelter_id" required>
-        <option value="">避難所を選択してください</option>
-        {% for shelter in shelters %}
-          {% set registered = registered_shelters|selectattr('name', 'equalto', shelter.name)|list|first %}
-          <option value="{{ shelter.id }}" data-address="{{ shelter.address or '' }}" {% if registered %}data-registered="true"{% endif %}>
-            {{ shelter.name }}{% if registered and registered.is_open != false %}（登録済み）{% elif registered %}（解除済み）{% endif %}
-          </option>
-        {% endfor %}
-      </select>
+      <div id="shelterTabs" class="shelter-tabs" role="tablist" aria-label="避難所名の五十音順"></div>
+      <select id="shelterId" name="shelter_id" required></select>
       <label for="shelterAddress">住所</label>
       <input id="shelterAddress" name="address" type="text" readonly required>
       <div id="shelterPreview" class="shelter-preview">避難所を選択すると登録状態を表示します。</div>
@@ -100,13 +96,13 @@
       </fieldset>
 
       <div class="register-actions">
-        <button class="register-button update" type="submit">避難所を登録・更新</button>
+        <button class="register-button update" type="submit">💾 避難所を登録・更新</button>
       </div>
     </form>
   </div>
 </section>
 
-<p><a class="register-button" href="{{ url_for('registered_shelters_list') }}">登録済み避難所一覧を見る</a></p>
+<p><a class="register-button" href="{{ url_for('open_shelters_list') }}">📋 開設済み避難所一覧</a></p>
 
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -115,6 +111,7 @@ document.addEventListener('DOMContentLoaded', function () {
   const candidates = {{ shelters|tojson }};
   const registered = {{ registered_shelters|tojson }};
   const shelterId = document.getElementById('shelterId');
+  const shelterTabs = document.getElementById('shelterTabs');
   const address = document.getElementById('shelterAddress');
   const preview = document.getElementById('shelterPreview');
   const crowdOptions = document.querySelectorAll('.crowd-option');
@@ -123,6 +120,56 @@ document.addEventListener('DOMContentLoaded', function () {
     multipurpose_toilet: document.getElementById('multipurposeToilet'),
     pets_allowed: document.getElementById('petsAllowed')
   };
+
+  const kanaGroups = [
+    ['あ行', 'あいうえお'], ['か行', 'かきくけこがぎぐげご'],
+    ['さ行', 'さしすせそざじずぜぞ'], ['た行', 'たちつてとだぢづでど'],
+    ['な行', 'なにぬねの'], ['は行', 'はひふへほばびぶべぼぱぴぷぺぽ'],
+    ['ま行', 'まみむめも'], ['や行', 'やゆよ'], ['ら行', 'らりるれろ'], ['わ行', 'わをん']
+  ];
+  let selectedKanaGroup = 'すべて';
+
+  function getKanaGroup(name) {
+    const first = String(name || '').trim().charAt(0);
+    return kanaGroups.find(([, characters]) => characters.includes(first))?.[0] || 'その他';
+  }
+
+  function renderShelterTabs() {
+    shelterTabs.innerHTML = '';
+    [['すべて', candidates.length]].concat(kanaGroups.map(([label]) => [label, candidates.filter(item => getKanaGroup(item.name) === label).length]), [['その他', candidates.filter(item => getKanaGroup(item.name) === 'その他').length]])
+      .filter(([, count]) => count > 0)
+      .forEach(([label, count]) => {
+        const tab = document.createElement('button');
+        tab.type = 'button';
+        tab.className = `shelter-tab${selectedKanaGroup === label ? ' is-selected' : ''}`;
+        tab.setAttribute('role', 'tab');
+        tab.setAttribute('aria-selected', String(selectedKanaGroup === label));
+        tab.textContent = `${label} (${count})`;
+        tab.addEventListener('click', function () {
+          selectedKanaGroup = label;
+          renderShelterTabs();
+          renderShelterOptions();
+        });
+        shelterTabs.appendChild(tab);
+      });
+  }
+
+  function renderShelterOptions() {
+    const currentValue = shelterId.value;
+    const options = candidates
+      .filter(item => selectedKanaGroup === 'すべて' || getKanaGroup(item.name) === selectedKanaGroup)
+      .sort((left, right) => left.name.localeCompare(right.name, 'ja'));
+    shelterId.innerHTML = '<option value="">避難所を選択してください</option>';
+    options.forEach(item => {
+      const saved = registered.find(entry => entry.name === item.name);
+      const option = document.createElement('option');
+      option.value = item.id;
+      option.dataset.address = item.address || '';
+      option.textContent = `${item.name}${saved ? (saved.is_open === false ? '（解除済み）' : '（登録済み）') : ''}`;
+      shelterId.appendChild(option);
+    });
+    if (options.some(item => String(item.id) === currentValue)) shelterId.value = currentValue;
+  }
 
   function updateSelectedShelter() {
     const selected = candidates.find(item => String(item.id) === shelterId.value);
@@ -154,6 +201,8 @@ document.addEventListener('DOMContentLoaded', function () {
   document.querySelectorAll('input[name="crowd_status"]').forEach(input => {
     input.addEventListener('change', updateCrowdHighlight);
   });
+  renderShelterTabs();
+  renderShelterOptions();
   updateSelectedShelter();
 
   const map = L.map('hazardMap').setView([40.8246, 140.7400], 12);

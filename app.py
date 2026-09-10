@@ -92,6 +92,7 @@ INSTRUCTIONS_FILE = os.path.join(APP_DIR, 'data', 'instructions.json')
 HAZARDS_FILE = os.path.join(APP_DIR, 'data', 'hazards.json')
 UPLOAD_DIR = os.path.join(APP_DIR, 'uploads')
 POSTS_FILE = os.path.join(APP_DIR, 'data', 'damage_posts.json')
+CHECKINS_FILE = os.path.join(APP_DIR, 'data', 'checkins.json')
 SHELTER_LIST_CSV = os.path.join(BASE_DIR, 'all_evacuation_sites_combined.csv')
 TSUNAMI_SHELTER_CSV = os.path.join(BASE_DIR, 'tsunami_shinsui_kuikigai_hinanjo.csv')
 SHELTER_COORDINATES_FILE = os.path.join(APP_DIR, 'data', 'shelter_coordinates.json')
@@ -130,6 +131,16 @@ CSV_ACCESSIBILITY_FIELDS = ('多目的トイレ', 'ペット可', '車いす対�
 def csv_flag(value):
     """CSVの設備値をbooleanへ変換する"""
     return str(value or '').strip().lower() in {'あり', '有', '可', '対応', 'yes', 'true', '1', 'o'}
+
+
+def normalize_shelter_value(value):
+    """避難所名・住所の重複判定用に全角半角と空白を統一する"""
+    normalized = unicodedata.normalize('NFKC', str(value or ''))
+    for separator in ('−', '－', '―', 'ー', '‐', '‑', '﹣', '–', '—'):
+        normalized = normalized.replace(separator, '-')
+    return ''.join(character for character in normalized if not character.isspace()).casefold()
+
+
 NOMINATIM_URL = 'https://nominatim.openstreetmap.org/search'
 NOMINATIM_HEADERS = {'User-Agent': 'BousaiApp/1.0 (shelter registration)'}
 
@@ -227,6 +238,7 @@ shelters = load_csv_shelters()
 registered_shelters = load_json(DATA_FILE, [])
 instructions = load_json(INSTRUCTIONS_FILE, [])
 damage_posts = load_json(POSTS_FILE, [])
+checkins = load_json(CHECKINS_FILE, {})
 hazards = load_json(HAZARDS_FILE, [])
 
 
@@ -260,6 +272,12 @@ def seed_demo_damage_posts():
             json.dump(damage_posts, f, ensure_ascii=False, indent=2)
     except OSError:
         pass
+
+
+def save_checkins():
+    """避難所ごとのチェックイン一覧をJSONへ保存する"""
+    with open(CHECKINS_FILE, 'w', encoding='utf-8') as f:
+        json.dump(checkins, f, ensure_ascii=False, indent=2)
 
 
 seed_demo_damage_posts()
@@ -726,8 +744,12 @@ def shelter_add():
             return render_template('shelter_add.html', error=True, message='避難所名、住所、画像は必須です。', form_data=form_data)
         if extension not in SHELTER_IMAGE_EXTENSIONS:
             return render_template('shelter_add.html', error=True, message='画像はjpg、jpeg、png、gif、webpのみ登録できます。', form_data=form_data)
-        if any(item.get('name') == name for item in shelters):
+        normalized_name = normalize_shelter_value(name)
+        normalized_address = normalize_shelter_value(address)
+        if any(normalize_shelter_value(item.get('name')) == normalized_name for item in shelters):
             return render_template('shelter_add.html', error=True, message='同じ名前の避難所はすでに登録されています。', form_data=form_data)
+        if any(normalize_shelter_value(item.get('address')) == normalized_address for item in shelters):
+            return render_template('shelter_add.html', error=True, message='同じ住所の避難所はすでに登録されています。', form_data=form_data)
 
         try:
             latitude, longitude = geocode_shelter_address(address)
@@ -868,6 +890,13 @@ def registered_shelters_list():
     return render_template('search_results.html', results=registered_shelters, registered_only=True)
 
 
+@app.route('/open_shelters')
+@login_required
+def open_shelters_list():
+    results = [item for item in registered_shelters if item.get('is_open', True) is not False]
+    return render_template('search_results.html', results=results, registered_only=True, open_only=True)
+
+
 @app.route('/registered_shelters/toggle/<shelter_id>', methods=['POST'])
 @login_required
 def toggle_shelter_status(shelter_id):
@@ -879,6 +908,24 @@ def toggle_shelter_status(shelter_id):
         shelter['is_open'] = not (shelter.get('is_open') is not False)
         save_registered_shelters()
     return redirect(url_for('registered_shelters_list'))
+
+
+@app.route('/api/shelters/<shelter_id>/checkins', methods=['GET', 'POST'])
+def shelter_checkins(shelter_id):
+    shelter = next((item for item in shelters if str(item.get('id')) == shelter_id), None)
+    if shelter is None:
+        return jsonify({'error': 'Shelter not found'}), 404
+
+    shelter_checkins_list = checkins.setdefault(shelter_id, [])
+    if request.method == 'POST':
+        payload = request.get_json(silent=True) or {}
+        name = str(payload.get('name') or '匿名の利用者').strip()[:40] or '匿名の利用者'
+        shelter_checkins_list.insert(0, {
+            'name': name,
+            'created_at': get_japan_time(),
+        })
+        save_checkins()
+    return jsonify(shelter_checkins_list)
 
 
 # 避難所検索ページ

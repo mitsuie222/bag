@@ -164,14 +164,14 @@
         <label for="attachment">ファイルを選択してください</label>
         <input id="attachment" name="attachment" type="file" accept=".jpg,.jpeg,.png,.gif,.webp,.bmp,.heic,.mp4,.mov,.avi,.webm,.mkv,.m4v" multiple>
         <div>動画・画像のみ選択可</div>
-        <button id="cameraAttachment" class="camera-button" type="button">カメラ起動</button>
+        <button id="cameraAttachment" class="camera-button" type="button">📷 カメラ起動</button>
       </div>
     </div>
     <div>最大3個まで選択できます</div>
     <div id="fileList" class="file-list" aria-live="polite"></div>
     <div class="report-actions">
-      <button id="clearReport" class="report-button" type="button" aria-label="コメントとファイルをクリア">クリア</button>
-      <button class="report-button" type="submit">投稿</button>
+      <button id="clearReport" class="report-button" type="button" aria-label="コメントとファイルをクリア">🧹 クリア</button>
+      <button class="report-button" type="submit">📤 投稿</button>
     </div>
     {% if message %}<div class="form-message {{ 'error' if error else 'success' }}" role="status">{{ message }}</div>{% endif %}
     <div id="clientMessage" class="form-message" role="alert" hidden></div>
@@ -181,7 +181,7 @@
 <section id="phoneCard" class="report-card phone-card" aria-labelledby="phoneTitle">
   <h2 id="phoneTitle" class="section-head">電話で被害を知らせる</h2>
   <div class="report-actions">
-    <button id="phoneButton" class="report-button" type="button">電話アプリを起動</button>
+    <button id="phoneButton" class="report-button" type="button">📞 電話アプリを起動</button>
     <span>TEL：017-000-0000</span>
   </div>
   <p>災害や被害状況を市の防災対策課へ知らせるための専用ダイヤルです。電話対応はAIが行うので、AIの指示に従って内容を話してください。災害等に関係のない連絡は極力控えてください。</p>
@@ -193,8 +193,8 @@
 <dialog id="cameraDialog" class="camera-dialog">
   <video id="cameraPreview" class="camera-preview" autoplay playsinline muted></video>
   <div class="report-actions">
-    <button id="takePhoto" class="report-button" type="button">写真を撮影</button>
-    <button id="closeCamera" class="report-button" type="button">閉じる</button>
+    <button id="takePhoto" class="report-button" type="button">📸 写真を撮影</button>
+    <button id="closeCamera" class="report-button" type="button">✖️ 閉じる</button>
   </div>
 </dialog>
 
@@ -202,8 +202,8 @@
   <p>電話番号を確認してください。</p>
   <input value="017-000-0000" readonly aria-label="電話番号">
   <div class="report-actions">
-    <button id="closePhone" class="report-button" type="button">閉じる</button>
-    <a class="report-button" href="tel:0170000000">電話アプリを開く</a>
+    <button id="closePhone" class="report-button" type="button">✖️ 閉じる</button>
+    <a class="report-button" href="tel:0170000000">📞 電話アプリを開く</a>
   </div>
 </dialog>
 
@@ -389,6 +389,13 @@ document.addEventListener('DOMContentLoaded', function() {
     }).addTo(map);
 
     const markersLayer = L.layerGroup().addTo(map);
+    L.circleMarker([40.8223, 140.7473], {
+      radius: 9,
+      color: '#0757c9',
+      weight: 3,
+      fillColor: '#2f80ed',
+      fillOpacity: 1
+    }).bindPopup('現在地（青森市庁）').addTo(map);
 
     function escapeHtml(value) {
       return String(value ?? '').replace(/[&<>'"]/g, character => ({

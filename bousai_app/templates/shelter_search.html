@@ -82,6 +82,22 @@
     cursor: pointer;
   }
 
+  .nearest-shelter-button {
+    width: 100%;
+    margin-top: 12px;
+    padding: 14px 18px;
+    border: 0;
+    border-radius: 10px;
+    color: #fff;
+    background: #147a70;
+    font: inherit;
+    font-size: 1.05rem;
+    font-weight: 800;
+    cursor: pointer;
+  }
+
+  .nearest-shelter-button:hover { background: #0f625a; }
+
   .map-shell {
     margin-top: 14px;
     border-radius: 18px;
@@ -340,10 +356,12 @@
           <option value="">地域を先に選択</option>
         </select>
         <button id="shelterVisibilityButton" class="shelter-visibility-button" type="button" aria-pressed="false">
-          既存の避難所を非表示
+          👁️ 既存の避難所を非表示
         </button>
       </label>
     </div>
+
+    <button id="nearestShelterButton" class="nearest-shelter-button" type="button">📍 現在地から一番近い避難所をルート表示</button>
 
     <div class="search-layout">
       <div>
@@ -382,6 +400,7 @@ document.addEventListener('DOMContentLoaded', function () {
   const districtSelect = document.getElementById('districtSelect');
   const areaSelect = document.getElementById('areaSelect');
   const shelterVisibilityButton = document.getElementById('shelterVisibilityButton');
+  const nearestShelterButton = document.getElementById('nearestShelterButton');
   const detailPanel = document.getElementById('shelterDetailPanel');
   const routeLayer = L.layerGroup().addTo(map);
   let startPoint = null;
@@ -389,6 +408,15 @@ document.addEventListener('DOMContentLoaded', function () {
   let routeRequestId = 0;
   let routeLine = null;
   let sheltersVisible = true;
+  let allShelters = [];
+  const cityHallLocation = L.latLng(40.8223, 140.7473);
+  let currentLocationMarker = L.circleMarker(cityHallLocation, {
+    radius: 9,
+    color: '#0757c9',
+    weight: 3,
+    fillColor: '#2f80ed',
+    fillOpacity: 1
+  }).bindPopup('現在地（青森市庁）').addTo(map);
 
   shelterVisibilityButton.addEventListener('click', function () {
     sheltersVisible = !sheltersVisible;
@@ -399,12 +427,21 @@ document.addEventListener('DOMContentLoaded', function () {
     }
     shelterVisibilityButton.setAttribute('aria-pressed', String(!sheltersVisible));
     shelterVisibilityButton.textContent = sheltersVisible
-      ? '既存の避難所を非表示'
-      : '既存の避難所を表示';
+      ? '👁️ 既存の避難所を非表示'
+      : '👁️ 既存の避難所を表示';
   });
 
   map.on('click', function (event) {
-    startPoint = event.latlng;
+    setStartPoint(event.latlng, '指定した出発地点');
+    if (selectedShelterData) {
+      showShelterDetail(selectedShelterData);
+    } else {
+      detailPanel.innerHTML = '<h2>出発地点を設定しました</h2><p>避難所のマーカーを選択すると徒歩ルートを表示します。</p>';
+    }
+  });
+
+  function setStartPoint(point, label) {
+    startPoint = point;
     routeLayer.clearLayers();
     routeLine = null;
     L.circleMarker(startPoint, {
@@ -412,13 +449,9 @@ document.addEventListener('DOMContentLoaded', function () {
       color: '#174a9c',
       fillColor: '#4d90fe',
       fillOpacity: 1
-    }).bindPopup('出発地点').openPopup().addTo(routeLayer);
-    if (selectedShelterData) {
-      showShelterDetail(selectedShelterData);
-    } else {
-      detailPanel.innerHTML = '<h2>出発地点を設定しました</h2><p>避難所の赤いマーカーを選択すると徒歩ルートを表示します。</p>';
-    }
-  });
+    }).bindPopup(label).openPopup().addTo(routeLayer);
+    currentLocationMarker.setLatLng(startPoint);
+  }
 
   const districtBoundaries = {
     '北部': [[40.857, 140.705], [40.865, 140.725], [40.865, 140.765], [40.845, 140.782], [40.835, 140.772], [40.832, 140.738], [40.842, 140.71], [40.857, 140.705]],
@@ -450,8 +483,8 @@ document.addEventListener('DOMContentLoaded', function () {
         <div><strong>土砂災害:</strong> ${escapeHtml(shelter.landslide || '未登録')}</div>
         <div style="margin-top: 8px; color: #42566d;">${escapeHtml(shelter.description || '')}</div>
         <div class="shelter-actions">
-          <button type="button" class="shelter-detail-button" data-shelter-id="${escapeHtml(shelter.id)}">詳細</button>
-          <button type="button" class="shelter-route-link" data-route-shelter-id="${escapeHtml(shelter.id)}">サイト内でルート表示</button>
+          <button type="button" class="shelter-detail-button" data-shelter-id="${escapeHtml(shelter.id)}">ℹ️ 詳細</button>
+          <button type="button" class="shelter-route-link" data-route-shelter-id="${escapeHtml(shelter.id)}">🧭 ルート表示</button>
         </div>
       </div>
     `;
@@ -491,6 +524,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const crowdAngle = -65 + (130 * crowdIndex / 100);
     detailPanel.innerHTML = `
       <h3>${escapeHtml(shelter.name)}</h3>
+      <p><strong>開設状況:</strong> ${shelter.is_open !== false ? '開設中' : '未開設'}</p>
       <p><strong>地区:</strong> ${escapeHtml(shelter.district || '未登録')}</p>
       <p><strong>地区名:</strong> ${escapeHtml(shelter.area || '未登録')}</p>
       <div class="route-summary" id="routeSummary">
@@ -512,24 +546,49 @@ document.addEventListener('DOMContentLoaded', function () {
         <strong>チェックイン</strong>
         <div class="checkin-controls">
           <input id="checkinName" type="text" maxlength="40" placeholder="名前（任意）">
-          <button id="checkinButton" class="checkin-button" type="button">チェックイン</button>
+          <button id="checkinButton" class="checkin-button" type="button">✅ チェックイン</button>
         </div>
-        <ul id="checkinList" class="checkin-list"><li>チェックインした人はいません</li></ul>
+        <ul id="checkinList" class="checkin-list"><li>チェックイン情報を読み込み中...</li></ul>
       </div>
     `;
+    loadCheckins(shelter);
     document.getElementById('checkinButton').addEventListener('click', function () {
       const name = document.getElementById('checkinName').value.trim() || '匿名の利用者';
-      const list = document.getElementById('checkinList');
-      const empty = list.querySelector('li');
-      if (empty && empty.textContent === 'チェックインした人はいません') list.innerHTML = '';
-      const entry = document.createElement('li');
-      entry.textContent = `${name}（いまチェックイン）`;
-      list.prepend(entry);
-      this.classList.remove('is-complete');
-      void this.offsetWidth;
-      this.classList.add('is-complete');
+      fetch(`/api/shelters/${encodeURIComponent(shelter.id)}/checkins`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name })
+      }).then(response => {
+        if (!response.ok) throw new Error('checkin failed');
+        return response.json();
+      }).then(checkinEntries => {
+        renderCheckins(checkinEntries);
+        this.classList.remove('is-complete');
+        void this.offsetWidth;
+        this.classList.add('is-complete');
+      }).catch(() => {
+        document.getElementById('checkinList').innerHTML = '<li>チェックインを保存できませんでした</li>';
+      });
     });
     updateWalkingRoute(shelter);
+  }
+
+  function renderCheckins(entries) {
+    const list = document.getElementById('checkinList');
+    if (!list) return;
+    list.innerHTML = entries.length
+      ? entries.map(entry => `<li>${escapeHtml(entry.name)}（${escapeHtml(entry.created_at || '')}）</li>`).join('')
+      : '<li>チェックインした人はいません</li>';
+  }
+
+  function loadCheckins(shelter) {
+    fetch(`/api/shelters/${encodeURIComponent(shelter.id)}/checkins`)
+      .then(response => response.json())
+      .then(renderCheckins)
+      .catch(() => {
+        const list = document.getElementById('checkinList');
+        if (list) list.innerHTML = '<li>チェックイン情報を取得できませんでした</li>';
+      });
   }
 
   function updateWalkingRoute(shelter) {
@@ -626,6 +685,51 @@ document.addEventListener('DOMContentLoaded', function () {
     });
   }
 
+  function distanceBetween(left, right) {
+    const latitudeRadians = (right.lat - left.lat) * Math.PI / 180;
+    const longitudeRadians = (right.lng - left.lng) * Math.PI / 180;
+    const latitude = left.lat * Math.PI / 180;
+    const otherLatitude = right.lat * Math.PI / 180;
+    const value = Math.sin(latitudeRadians / 2) ** 2
+      + Math.sin(longitudeRadians / 2) ** 2 * Math.cos(latitude) * Math.cos(otherLatitude);
+    return 6371000 * 2 * Math.atan2(Math.sqrt(value), Math.sqrt(1 - value));
+  }
+
+  function showNearestShelter(point) {
+    const candidates = allShelters.filter(shelter => Number.isFinite(shelter.lat) && Number.isFinite(shelter.lng));
+    if (!candidates.length) return;
+    const nearest = candidates.reduce((current, shelter) => {
+      const currentDistance = distanceBetween(point, current);
+      const shelterDistance = distanceBetween(point, shelter);
+      return shelterDistance < currentDistance ? shelter : current;
+    });
+    setStartPoint(point, '現在地');
+    showShelterDetail(nearest);
+  }
+
+  nearestShelterButton.addEventListener('click', function () {
+    this.disabled = true;
+    this.textContent = '📍 現在地を確認中...';
+    const fallback = () => {
+      showNearestShelter(cityHallLocation);
+      this.disabled = false;
+      this.textContent = '📍 現在地から一番近い避難所をルート表示';
+    };
+    if (!navigator.geolocation) {
+      fallback();
+      return;
+    }
+    navigator.geolocation.getCurrentPosition(
+      position => {
+        showNearestShelter(L.latLng(position.coords.latitude, position.coords.longitude));
+        this.disabled = false;
+        this.textContent = '📍 現在地から一番近い避難所をルート表示';
+      },
+      fallback,
+      { enableHighAccuracy: true, timeout: 8000, maximumAge: 60000 }
+    );
+  });
+
   function updateAreaOptions(selectedDistrict) {
     const areas = [...new Set(
       allShelters
@@ -706,7 +810,7 @@ document.addEventListener('DOMContentLoaded', function () {
       return response.json();
     })
     .then(function (data) {
-      window.allShelters = data;
+      allShelters = data;
       updateAreaOptions('全域');
       renderMarkers('全域', '');
     })

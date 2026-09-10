@@ -206,8 +206,8 @@
     </div>
     <div class="header-tools">
       <span>文字サイズ変更</span>
-      <button id="font-size-standard" class="tool-button" type="button" aria-pressed="true">標準</button>
-      <button id="font-size-large" class="tool-button" type="button" aria-pressed="false">拡大</button>
+      <button id="font-size-standard" class="tool-button" type="button" aria-pressed="true">🔤 標準</button>
+      <button id="font-size-large" class="tool-button" type="button" aria-pressed="false">🔠 拡大</button>
       <span>背景色</span>
       <div class="background-tools" aria-label="背景色変更">
         <button class="background-button" type="button" data-background="black" aria-label="背景を黒にする">黒</button>
@@ -216,22 +216,23 @@
         <button class="background-button" type="button" data-background="yellow" aria-label="背景を黄色にする">黄</button>
       </div>
       {% if session.logged_in %}
-        <a class="tool-button" href="/logout">ログアウト</a>
+        <a class="tool-button" href="/logout">🚪 ログアウト</a>
         <span>ログイン中</span>
       {% else %}
-        <a class="tool-button" href="{{ url_for('login', next=request.full_path) }}">ログイン</a>
+        <a class="tool-button" href="{{ url_for('login', next=request.full_path) }}">🔑 ログイン</a>
         <span>未ログイン</span>
       {% endif %}
     </div>
   </header>
 
   <nav id="main-nav" class="main-nav">
-    {% if request.endpoint != 'index' %}<a href="/">ホームへ</a>{% endif %}
-    <a href="/shelter_search">避難所検索へ</a>
+    {% if request.endpoint != 'index' %}<a href="/">🏠 ホームへ</a>{% endif %}
+    <a href="/shelter_search">🗺️ 避難所検索へ</a>
     {% if session.logged_in %}
-      <a href="/shelter_add">新規避難所追加</a>
-      <a href="/shelter_register">避難所登録</a>
-      <a href="/board">指示・発信ボード</a>
+      <a href="/shelter_add">➕ 新規避難所追加</a>
+      <a href="/shelter_register">📝 避難所登録</a>
+      <a href="/registered_shelters">📋 登録済み避難所一覧</a>
+      <a href="/board">📣 指示・発信ボード</a>
     {% endif %}
   </nav>
 

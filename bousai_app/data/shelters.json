@@ -1,5 +1,22 @@
 [
   {
+    "id": 61,
+    "name": "新しい名前",
+    "address": "青森市青葉1丁目1-1",
+    "description": "",
+    "amenities": [],
+    "latitude": 40.8058025,
+    "longitude": 140.743057,
+    "lat": 40.8058025,
+    "lng": 140.743057,
+    "image_url": "/static/uploads/61_shelter_f718555f_shelter.png",
+    "source": "custom",
+    "crowd_status": "未入力",
+    "wheelchair_accessible": false,
+    "multipurpose_toilet": false,
+    "pets_allowed": false
+  },
+  {
     "id": 60,
     "name": "おすすめの避難所3",
     "address": "ああ",
@@ -133,7 +150,8 @@
     "capacity": 148,
     "tsunami": "対応",
     "landslide": "対応",
-    "description": "北部に所在する避難施設です。"
+    "description": "北部に所在する避難施設です。",
+    "address": "青森市大字浜田字豊田36-2"
   },
   {
     "id": 5,
@@ -212,7 +230,8 @@
     "capacity": 197,
     "tsunami": "要確認",
     "landslide": "対応",
-    "description": "西部に所在する避難施設です。"
+    "description": "西部に所在する避難施設です。",
+    "address": "青森市東大野一丁目3-1"
   },
   {
     "id": 12,
@@ -223,7 +242,8 @@
     "capacity": 204,
     "tsunami": "対応",
     "landslide": "要確認",
-    "description": "西部に所在する避難施設です。"
+    "description": "西部に所在する避難施設です。",
+    "address": "青森市大字野尻字野田60"
   },
   {
     "id": 13,
@@ -234,7 +254,8 @@
     "capacity": 211,
     "tsunami": "要確認",
     "landslide": "対応",
-    "description": "西部に所在する避難施設です。"
+    "description": "西部に所在する避難施設です。",
+    "address": "青森市松原二丁目4-4"
   },
   {
     "id": "56",
@@ -388,7 +409,8 @@
     "capacity": 302,
     "tsunami": "対応",
     "landslide": "対応",
-    "description": "東部に所在する避難施設です。"
+    "description": "東部に所在する避難施設です。",
+    "address": "青森市筒井一丁目1-1"
   },
   {
     "id": 27,
@@ -399,7 +421,8 @@
     "capacity": 309,
     "tsunami": "要確認",
     "landslide": "要確認",
-    "description": "東部に所在する避難施設です。"
+    "description": "東部に所在する避難施設です。",
+    "address": "青森市大字荒川字柴田92-5"
   },
   {
     "id": 28,
@@ -487,7 +510,8 @@
     "capacity": 145,
     "tsunami": "要確認",
     "landslide": "対応",
-    "description": "南東部に所在する避難施設です。"
+    "description": "南東部に所在する避難施設です。",
+    "address": "青森市大字幸畑字松元50-2"
   },
   {
     "id": 36,
@@ -586,7 +610,8 @@
     "capacity": 208,
     "tsunami": "対応",
     "landslide": "対応",
-    "description": "南部に所在する避難施設です。"
+    "description": "南部に所在する避難施設です。",
+    "address": "青森市中央二丁目17-13"
   },
   {
     "id": 45,
@@ -652,7 +677,8 @@
     "capacity": 250,
     "tsunami": "対応",
     "landslide": "対応",
-    "description": "浪岡地区に所在する避難施設です。"
+    "description": "浪岡地区に所在する避難施設です。",
+    "address": "青森市浪岡大字浪岡字稲盛1"
   },
   {
     "id": 51,
