@@ -960,6 +960,14 @@ def board():
         attachment_upload = request.files.get('attachment')
         target = request.form.get('target', '').strip()
         district = request.form.get('district', '').strip()
+        disaster_enabled = request.form.get('disaster_enabled') == 'on'
+        disaster_type = request.form.get('disaster_type', '').strip()
+        disaster_address = request.form.get('disaster_address', '').strip()
+        try:
+            disaster_latitude = float(request.form.get('disaster_latitude', ''))
+            disaster_longitude = float(request.form.get('disaster_longitude', ''))
+        except (TypeError, ValueError):
+            disaster_latitude = disaster_longitude = None
 
         if not subject or not content:
             return render_template('board.html', instructions=instructions,
@@ -972,7 +980,15 @@ def board():
         if target not in ('全員', '住民', '職員'):
             return render_template('board.html', instructions=instructions,
                                    error=True, message='連絡対象を選択してください。',
-                                   form_data=form_data)
+                                   form_data=form_data, damage_posts=damage_posts)
+        if disaster_enabled and (
+            disaster_latitude is None or disaster_longitude is None
+            or not AOMORI_CITY_LATITUDE_RANGE[0] <= disaster_latitude <= AOMORI_CITY_LATITUDE_RANGE[1]
+            or not AOMORI_CITY_LONGITUDE_RANGE[0] <= disaster_longitude <= AOMORI_CITY_LONGITUDE_RANGE[1]
+        ):
+            return render_template('board.html', instructions=instructions,
+                                   error=True, message='災害情報を登録する位置を地図上で選択してください。',
+                                   form_data=form_data, damage_posts=damage_posts)
 
         attachment = ''
         if attachment_upload and attachment_upload.filename:
@@ -1002,17 +1018,30 @@ def board():
         }
         instructions.insert(0, new_instruction)
         save_instructions()
+        if disaster_enabled:
+            damage_posts.insert(0, {
+                'id': f'board-{uuid.uuid4().hex}',
+                'comment': content,
+                'address': disaster_address or district,
+                'latitude': disaster_latitude,
+                'longitude': disaster_longitude,
+                'disaster_type': disaster_type or 'その他',
+                'source': 'board',
+                'created_at': now,
+            })
+            save_damage_posts()
         return redirect(url_for('board'))
 
     return render_template('board.html', instructions=instructions,
-                           form_data={}, show_history=False)
+                           form_data={}, show_history=False, damage_posts=damage_posts)
 
 
 @app.route('/board/history')
 @login_required
 def board_history():
     return render_template('board.html', instructions=instructions,
-                           form_data={}, show_history=True)
+                           form_data={}, show_history=True, damage_posts=damage_posts,
+                           from_home=request.args.get('from_page') == 'home')
 
 
 @app.route('/board/history/delete/<int:instruction_id>', methods=['POST'])

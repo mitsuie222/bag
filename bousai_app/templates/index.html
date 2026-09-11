@@ -149,7 +149,7 @@
     <p>現在、発信履歴はありません。</p>
   {% endif %}
   {% if bulletin_has_more %}
-    <p><a class="report-button" href="{{ url_for('board_history') }}">📜 一覧を見る</a></p>
+    <p><a class="report-button" href="{{ url_for('board_history', from_page='home') }}">📜 一覧を見る</a></p>
   {% endif %}
 </section>
 
@@ -392,6 +392,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }).addTo(map);
 
     const markersLayer = L.layerGroup().addTo(map);
+    const damageMarkersLayer = L.layerGroup().addTo(map);
     L.circleMarker([40.8223, 140.7473], {
       radius: 9,
       color: '#0757c9',
@@ -420,6 +421,14 @@ document.addEventListener('DOMContentLoaded', function() {
       `;
     }
 
+    function damagePopupHtml(post) {
+      return `<div style="min-width: 180px; line-height: 1.6;">
+        <strong style="color: #6c3483;">${escapeHtml(post.disaster_type || '災害情報')}</strong>
+        <div><strong>場所:</strong> ${escapeHtml(post.address || '未登録')}</div>
+        <div>${escapeHtml(post.comment || '内容なし')}</div>
+      </div>`;
+    }
+
     fetch('/shelters')
       .then(response => response.json())
       .then(shelters => {
@@ -439,6 +448,25 @@ document.addEventListener('DOMContentLoaded', function() {
         if (bounds.length) map.fitBounds(bounds, {padding: [24, 24]});
       })
       .catch(error => console.error('避難所データの取得に失敗しました:', error));
+
+    fetch('/api/damage_posts')
+      .then(response => {
+        if (!response.ok) throw new Error('災害情報の取得に失敗しました');
+        return response.json();
+      })
+      .then(posts => {
+        posts.forEach(post => {
+          if (!Number.isFinite(post.latitude) || !Number.isFinite(post.longitude)) return;
+          L.circleMarker([post.latitude, post.longitude], {
+            radius: 7,
+            color: '#6c3483',
+            weight: 2,
+            fillColor: '#8e44ad',
+            fillOpacity: 0.9
+          }).bindPopup(damagePopupHtml(post)).addTo(damageMarkersLayer);
+        });
+      })
+      .catch(error => console.error('災害情報の取得に失敗しました:', error));
 
     function updateWeatherContent(data) {
         const weatherContent = document.getElementById('weatherContent');

@@ -5,6 +5,8 @@
 {% block content %}
 <style>
   .board-grid { display: grid; grid-template-columns: minmax(280px, 0.9fr) minmax(320px, 1.1fr); gap: 24px; }
+  .board-grid > div:nth-child(2) { grid-column: 1; }
+  .board-grid > form { grid-column: 2; grid-row: 1 / span 2; }
   .board-panel { padding: 20px; background: #fff; border: 1px solid #bbb; }
   .board-panel h2 { margin-top: 0; }
   .board-form { display: grid; gap: 12px; }
@@ -20,6 +22,10 @@
   .district-shape.is-selected { fill: #ef6464 !important; stroke: #9e1f1f; stroke-width: 4; }
   .district-label { font-size: 14px; font-weight: 700; pointer-events: none; text-anchor: middle; }
   .district-status { min-height: 1.5em; margin: 10px 0; }
+  #boardMap { height: 360px; border: 1px solid #999; }
+  .map-help { margin: 8px 0; }
+  .disaster-fields { display: grid; gap: 8px; padding: 12px; border: 1px solid #bbb; }
+  .disaster-fields input, .disaster-fields select { width: 100%; padding: 8px; border: 1px solid #999; border-radius: 6px; font: inherit; }
   .board-actions { display: flex; gap: 8px; flex-wrap: wrap; }
   .board-button { padding: 10px 18px; border: 1px solid #8998a6; border-radius: 6px; background: #dceaf8; cursor: pointer; font: inherit; }
   .board-button.primary { background: #8dbce0; }
@@ -32,11 +38,14 @@
   .history-table .delete-button { padding: 6px 10px; border: 1px solid #b55; border-radius: 4px; background: #fff0f0; cursor: pointer; }
   @media (max-width: 700px) {
     .board-grid { grid-template-columns: 1fr; gap: 14px; }
+    .board-grid > div:nth-child(2), .board-grid > form { grid-column: auto; grid-row: auto; }
     .board-button.primary { width: 100%; }
   }
 </style>
 
 {% if not show_history %}
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <section class="board-panel">
   <h2>発信ボード</h2>
   <p>指示・発信を登録・確認できます。</p>
@@ -73,12 +82,32 @@
       </div>
     </div>
 
+    <div>
+      <h3>災害情報を地図に登録</h3>
+      <div id="boardMap" aria-label="災害情報を登録する地図"></div>
+      <p id="boardMapStatus" class="map-help" aria-live="polite">地図をクリックして登録位置を選択してください。</p>
+    </div>
+
     <form class="board-form" method="post" action="{{ url_for('board') }}" enctype="multipart/form-data" onsubmit="return confirm('本当によろしいですか？');">
       <input id="districtInput" name="district" type="hidden" value="{{ form_data.get('district', '') }}">
       <label for="subject">件名</label>
       <input id="subject" name="subject" type="text" required value="{{ form_data.get('subject', '') }}">
       <label for="content">連絡内容</label>
       <textarea id="content" name="content" required>{{ form_data.get('content', '') }}</textarea>
+      <fieldset class="disaster-fields">
+        <legend>地図への災害情報登録（任意）</legend>
+        <label><input id="disasterEnabled" name="disaster_enabled" type="checkbox" {% if form_data.get('disaster_enabled') %}checked{% endif %}> この連絡内容を地図上の災害情報として登録</label>
+        <label for="disasterType">災害種別</label>
+        <select id="disasterType" name="disaster_type">
+          {% for value, label in [('洪水', '洪水・浸水'), ('土砂災害', '土砂災害'), ('津波', '津波'), ('道路冠水', '道路冠水'), ('その他', 'その他')] %}
+          <option value="{{ value }}" {% if form_data.get('disaster_type', 'その他') == value %}selected{% endif %}>{{ label }}</option>
+          {% endfor %}
+        </select>
+        <label for="disasterAddress">場所の名前・住所（任意）</label>
+        <input id="disasterAddress" name="disaster_address" type="text" value="{{ form_data.get('disaster_address', '') }}">
+        <input id="disasterLatitude" name="disaster_latitude" type="hidden" value="{{ form_data.get('disaster_latitude', '') }}">
+        <input id="disasterLongitude" name="disaster_longitude" type="hidden" value="{{ form_data.get('disaster_longitude', '') }}">
+      </fieldset>
       <label for="attachment">添付ファイル情報（任意）</label>
       <input id="attachment" name="attachment" type="file" accept=".jpg,.jpeg,.png,.gif,.webp,.bmp,.heic,.mp4,.mov,.avi,.webm,.mkv,.m4v">
       <fieldset>
@@ -124,7 +153,15 @@
   </div>
   {% else %}<p>現在、送信履歴はありません。</p>{% endif %}
   {% if not show_history and instructions|length >= 5 %}<p><a class="board-button" href="{{ url_for('board_history') }}">📜 一覧を見る</a></p>{% endif %}
-  {% if show_history %}<p><a class="board-button" href="{{ url_for('board') }}">↩️ ボードへ戻る</a></p>{% endif %}
+  {% if show_history %}
+    <p>
+      {% if from_home %}
+        <a class="board-button" href="{{ url_for('index') }}">↩️ ホームへ戻る</a>
+      {% else %}
+        <a class="board-button" href="{{ url_for('board') }}">↩️ ボードへ戻る</a>
+      {% endif %}
+    </p>
+  {% endif %}
 </section>
 
 {% if not show_history %}
@@ -166,6 +203,38 @@ document.addEventListener('DOMContentLoaded', function () {
     renderDistricts();
   });
   renderDistricts();
+
+  const boardMap = L.map('boardMap').setView([40.822, 140.74], 12);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '&copy; OpenStreetMap contributors'
+  }).addTo(boardMap);
+  const disasterLayer = L.layerGroup().addTo(boardMap);
+  const selectedLayer = L.layerGroup().addTo(boardMap);
+  const posts = {{ damage_posts|default([])|tojson }};
+
+  function escapeHtml(value) {
+    return String(value ?? '').replace(/[&<>"']/g, character => ({
+      '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+    }[character]));
+  }
+
+  posts.forEach(post => {
+    if (!Number.isFinite(post.latitude) || !Number.isFinite(post.longitude)) return;
+    L.circleMarker([post.latitude, post.longitude], {
+      radius: 7, color: '#6c3483', fillColor: '#8e44ad', fillOpacity: 0.85
+    }).bindPopup(`<strong>${escapeHtml(post.disaster_type || '災害情報')}</strong><br>${escapeHtml(post.comment || '')}`).addTo(disasterLayer);
+  });
+
+  boardMap.on('click', event => {
+    const latitude = event.latlng.lat.toFixed(6);
+    const longitude = event.latlng.lng.toFixed(6);
+    document.getElementById('disasterLatitude').value = latitude;
+    document.getElementById('disasterLongitude').value = longitude;
+    document.getElementById('disasterEnabled').checked = true;
+    selectedLayer.clearLayers();
+    L.marker(event.latlng).addTo(selectedLayer);
+    document.getElementById('boardMapStatus').textContent = `登録位置: ${latitude}, ${longitude}`;
+  });
 });
 </script>
 {% endif %}
