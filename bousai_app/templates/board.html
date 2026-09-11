@@ -24,6 +24,7 @@
   .board-button { padding: 10px 18px; border: 1px solid #8998a6; border-radius: 6px; background: #dceaf8; cursor: pointer; font: inherit; }
   .board-button.primary { background: #8dbce0; }
   .board-message { padding: 10px; color: #a40000; background: #fff0f0; border: 1px solid #d66; }
+  .history-page { width: 100vw; margin-left: calc(50% - 50vw); }
   .history-wrap { overflow-x: auto; }
   .history-table { width: 100%; min-width: 760px; border-collapse: collapse; }
   .history-table th, .history-table td { padding: 9px; border: 1px solid #aaa; text-align: left; vertical-align: top; overflow-wrap: anywhere; }
@@ -35,6 +36,7 @@
   }
 </style>
 
+{% if not show_history %}
 <section class="board-panel">
   <h2>発信ボード</h2>
   <p>指示・発信を登録・確認できます。</p>
@@ -71,14 +73,14 @@
       </div>
     </div>
 
-    <form class="board-form" method="post" action="{{ url_for('board') }}" onsubmit="return confirm('本当によろしいですか？');">
+    <form class="board-form" method="post" action="{{ url_for('board') }}" enctype="multipart/form-data" onsubmit="return confirm('本当によろしいですか？');">
       <input id="districtInput" name="district" type="hidden" value="{{ form_data.get('district', '') }}">
       <label for="subject">件名</label>
       <input id="subject" name="subject" type="text" required value="{{ form_data.get('subject', '') }}">
       <label for="content">連絡内容</label>
       <textarea id="content" name="content" required>{{ form_data.get('content', '') }}</textarea>
       <label for="attachment">添付ファイル情報（任意）</label>
-      <input id="attachment" name="attachment" type="text" value="{{ form_data.get('attachment', '') }}">
+      <input id="attachment" name="attachment" type="file" accept=".jpg,.jpeg,.png,.gif,.webp,.bmp,.heic,.mp4,.mov,.avi,.webm,.mkv,.m4v">
       <fieldset>
         <legend>連絡対象</legend>
         <div class="target-options">
@@ -91,16 +93,18 @@
     </form>
   </div>
 </section>
+{% endif %}
 
-<section class="board-panel">
+<section class="board-panel{% if show_history %} history-page{% endif %}">
   <h3>{% if show_history %}送信履歴一覧{% else %}送信履歴{% endif %}</h3>
   {% if instructions|length >= 5 and not show_history %}<p>送信履歴が5件以上あります。</p>{% endif %}
   {% if instructions %}
+  {% set history_items = instructions if show_history else instructions[:4] %}
   <div class="history-wrap">
     <table class="history-table">
       <thead><tr><th>対象</th><th>地区</th><th>件名</th><th>内容</th><th>添付ファイル</th><th>送信日時</th><th>操作</th></tr></thead>
       <tbody>
-      {% for inst in instructions %}
+      {% for inst in history_items %}
         <tr>
           <td>{{ inst.target or '未指定' }}</td>
           <td>{{ inst.district or '全地区' }}</td>
@@ -123,6 +127,7 @@
   {% if show_history %}<p><a class="board-button" href="{{ url_for('board') }}">↩️ ボードへ戻る</a></p>{% endif %}
 </section>
 
+{% if not show_history %}
 <script>
 document.addEventListener('DOMContentLoaded', function () {
   const shapes = Array.from(document.querySelectorAll('.district-shape'));
@@ -163,4 +168,5 @@ document.addEventListener('DOMContentLoaded', function () {
   renderDistricts();
 });
 </script>
+{% endif %}
 {% endblock %}

@@ -1,5 +1,29 @@
 [
   {
+    "id": 11,
+    "target": "職員",
+    "information_type": "指示",
+    "subject": "テストメール",
+    "content": "oop",
+    "attachment": "",
+    "district": "東部",
+    "status": "発信中",
+    "created_at": "2026年09月10日 17:21",
+    "updated_at": "2026年09月10日 17:21"
+  },
+  {
+    "id": 10,
+    "target": "住民",
+    "information_type": "発信",
+    "subject": "テストメール2",
+    "content": "11",
+    "attachment": "",
+    "district": "南部",
+    "status": "発信中",
+    "created_at": "2026年09月10日 17:20",
+    "updated_at": "2026年09月10日 17:20"
+  },
+  {
     "id": 9,
     "target": "全員",
     "information_type": "発信",

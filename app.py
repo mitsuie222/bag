@@ -609,12 +609,18 @@ def get_disaster_info(category):
 @app.route('/', methods=['GET', 'POST'])
 def index():
     resident_notices = [i for i in instructions if i.get('target') == '住民']
-    bulletin_posts = instructions[:4]
+    visible_instructions = (
+        instructions if session.get('logged_in') else
+        [i for i in instructions if i.get('target') != '職員']
+    )
+    bulletin_posts = visible_instructions[:4]
+    bulletin_has_more = len(visible_instructions) >= 5
     if request.method == 'POST':
         address = normalize_address(request.form.get('address', ''))
         if not address:
             return render_template('index.html', resident_notices=resident_notices,
                                    bulletin_posts=bulletin_posts,
+                                   bulletin_has_more=bulletin_has_more,
                                    error=True, message='住所を入力してください。'), 400
         uploads = [
             item for item in request.files.getlist('attachment')
@@ -623,6 +629,7 @@ def index():
         if len(uploads) > 3:
             return render_template('index.html', resident_notices=resident_notices,
                                    bulletin_posts=bulletin_posts,
+                                   bulletin_has_more=bulletin_has_more,
                                    error=True, message='選択できるファイルは最大3つまでです。'), 400
 
         prepared = []
@@ -632,6 +639,7 @@ def index():
                 return render_template(
                     'index.html', resident_notices=resident_notices, error=True,
                     bulletin_posts=bulletin_posts,
+                    bulletin_has_more=bulletin_has_more,
                     message='許可されていないファイル形式です。'
                 ), 400
             stem = secure_filename(os.path.splitext(upload.filename)[0]) or 'upload'
@@ -674,11 +682,13 @@ def index():
         save_damage_posts()
         return render_template('index.html', resident_notices=resident_notices,
                                bulletin_posts=bulletin_posts,
+                               bulletin_has_more=bulletin_has_more,
                                success=True, message='情報提供ありがとうございます。')
     return render_template(
         'index.html',
         resident_notices=resident_notices,
-        bulletin_posts=bulletin_posts
+        bulletin_posts=bulletin_posts,
+        bulletin_has_more=bulletin_has_more
     )
 
 
@@ -947,22 +957,35 @@ def board():
     if request.method == 'POST':
         subject = request.form.get('subject', '').strip()
         content = request.form.get('content', '').strip()
-        attachment = request.form.get('attachment', '').strip()
+        attachment_upload = request.files.get('attachment')
         target = request.form.get('target', '').strip()
         district = request.form.get('district', '').strip()
 
         if not subject or not content:
-            return render_template('board.html', instructions=instructions[:4],
+            return render_template('board.html', instructions=instructions,
                                    error=True, message='件名と連絡内容を入力してください。',
                                    form_data=form_data)
         if not district:
-            return render_template('board.html', instructions=instructions[:4],
+            return render_template('board.html', instructions=instructions,
                                    error=True, message='地区を選択してください。',
                                    form_data=form_data)
         if target not in ('全員', '住民', '職員'):
-            return render_template('board.html', instructions=instructions[:4],
+            return render_template('board.html', instructions=instructions,
                                    error=True, message='連絡対象を選択してください。',
                                    form_data=form_data)
+
+        attachment = ''
+        if attachment_upload and attachment_upload.filename:
+            extension = os.path.splitext(attachment_upload.filename)[1].lower()
+            if extension not in ALLOWED_UPLOAD_EXTENSIONS:
+                return render_template('board.html', instructions=instructions,
+                                       error=True, message='許可されていないファイル形式です。',
+                                       form_data=form_data)
+            safe_stem = secure_filename(os.path.splitext(attachment_upload.filename)[0]) or 'attachment'
+            stored_name = f'{uuid.uuid4().hex}_{safe_stem}{extension}'
+            os.makedirs(UPLOAD_DIR, exist_ok=True)
+            attachment_upload.save(os.path.join(UPLOAD_DIR, stored_name))
+            attachment = attachment_upload.filename
 
         now = get_japan_time()
         new_instruction = {
@@ -981,7 +1004,7 @@ def board():
         save_instructions()
         return redirect(url_for('board'))
 
-    return render_template('board.html', instructions=instructions[:4],
+    return render_template('board.html', instructions=instructions,
                            form_data={}, show_history=False)
 
 

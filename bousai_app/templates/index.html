@@ -148,6 +148,9 @@
   {% else %}
     <p>現在、発信履歴はありません。</p>
   {% endif %}
+  {% if bulletin_has_more %}
+    <p><a class="report-button" href="{{ url_for('board_history') }}">📜 一覧を見る</a></p>
+  {% endif %}
 </section>
 
 <section id="reportCard" class="report-card" aria-labelledby="reportTitle">
